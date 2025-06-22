@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Edit, Trash2, Save, X } from "lucide-react";
+import { Edit, Trash2, Save, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Transaction } from "@/lib/types";
 
@@ -70,22 +70,24 @@ const TransactionDetailsModal: React.FC<Props> = ({
 
   return (
     <Dialog open={!!transaction} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader className="pb-4">
-          <div className="flex items-center justify-between">
+      <DialogContent className="max-w-md" showCloseButton={false}>
+        <DialogHeader className="pb-2">
+          <div className="flex items-start justify-between">
             <DialogTitle className="text-xl font-semibold">
               {isEditing ? "Modifica Transazione" : "Dettagli Transazione"}
             </DialogTitle>
-            <div className="flex items-center gap-1">
+
+            <div className="flex items-center gap-3">
               {!isEditing ? (
                 <>
-                  <Button variant="ghost" size="sm" onClick={handleEdit}>
+                  <Button variant="ghost" size="icon" onClick={handleEdit}>
                     <Edit className="w-4 h-4" />
                   </Button>
+
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="sm">
-                        <Trash2 className="w-4 h-4" />
+                      <Button variant="ghost" size="icon">
+                        <Trash2 className="w-4 h-4 text-red-600" />
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
@@ -103,14 +105,23 @@ const TransactionDetailsModal: React.FC<Props> = ({
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
+
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={onClose}
+                    aria-label="Chiudi"
+                  >
+                    <XCircle className="w-4 h-4 text-gray-500 hover:text-gray-700" />
+                  </Button>
                 </>
               ) : (
                 <>
-                  <Button variant="ghost" size="sm" onClick={handleSave}>
+                  <Button variant="ghost" size="icon" onClick={handleSave}>
                     <Save className="w-4 h-4" />
                   </Button>
-                  <Button variant="ghost" size="sm" onClick={handleCancel}>
-                    <X className="w-4 h-4" />
+                  <Button variant="ghost" size="icon" onClick={handleCancel}>
+                    <XCircle className="w-4 h-4 text-gray-500 hover:text-gray-700" />
                   </Button>
                 </>
               )}

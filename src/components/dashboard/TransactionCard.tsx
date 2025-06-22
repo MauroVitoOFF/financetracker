@@ -57,10 +57,10 @@ const TransactionCard: React.FC<Props> = ({ transaction, onClick }) => {
 
         {/* Titolo + Descrizione */}
         <div className="flex flex-col min-w-0">
-          <span className="font-medium text-gray-900 dark:text-white truncate">
+          <span className="font-medium text-gray-900 dark:text-white truncate text-start">
             {title || "—"}
           </span>
-          <span className="text-sm text-gray-500 dark:text-gray-400 truncate">
+          <span className="text-sm text-gray-500 dark:text-gray-400 truncate text-start">
             {description || category}
           </span>
         </div>

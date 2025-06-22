@@ -45,7 +45,15 @@ export default function Transactions() {
     setIsLoading(true);
     const expenseData = await getTransactions("expense");
     const incomeData = await getTransactions("income");
-    setTransactions([...expenseData, ...incomeData]);
+
+    const combined = [...expenseData, ...incomeData];
+
+    // Ordina dalla più recente alla più vecchia
+    combined.sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+
+    setTransactions(combined);
     setIsLoading(false);
   }, []);
 

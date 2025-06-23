@@ -56,9 +56,13 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <Toaster position="bottom-right" offset={20} />
-        <Sidebar />
-        {children}
+        <div className="min-h-screen bg-gray-50 pl-20 pr-8 py-8">
+          <div className="max-w-6xl mx-auto">
+            <Toaster position="bottom-right" offset={20} />
+            <Sidebar />
+            {children}
+          </div>
+        </div>
       </body>
     </html>
   );

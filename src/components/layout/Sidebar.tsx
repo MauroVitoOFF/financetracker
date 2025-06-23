@@ -5,11 +5,11 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   CreditCard,
-  PiggyBank,
-  Target,
+  // PiggyBank,
+  // Target,
   Receipt,
   Settings,
-  BarChart3,
+  // BarChart3,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -17,11 +17,11 @@ const Sidebar = () => {
   const pathname = usePathname();
 
   const menuItems = [
-    { icon: LayoutDashboard, label: "Dashboard", path: "/" },
+    { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
     { icon: Receipt, label: "Transazioni", path: "/transactions" },
-    { icon: PiggyBank, label: "Budget", path: "/budget" },
-    { icon: Target, label: "Obiettivi", path: "/goals" },
-    { icon: BarChart3, label: "Report", path: "/reports" },
+    // { icon: PiggyBank, label: "Budget", path: "/budget" },
+    // { icon: Target, label: "Obiettivi", path: "/goals" },
+    // { icon: BarChart3, label: "Report", path: "/reports" },
     { icon: CreditCard, label: "Abbonamenti", path: "/subscriptions" },
     { icon: Settings, label: "Impostazioni", path: "/settings" },
   ];

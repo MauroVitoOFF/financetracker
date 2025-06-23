@@ -91,7 +91,7 @@ export default function Transactions() {
   };
 
   return (
-    <div className="bg-gray-50 min-h-screen space-y-8 p-8">
+    <div className="bg-gray-50 min-h-screen space-y-8">
       <Header
         title="Transazioni"
         description="Gestisci e visualizza le tue transazioni"

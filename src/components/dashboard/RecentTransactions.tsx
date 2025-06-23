@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import TransactionCard from "./TransactionCard";
+import TransactionDetailsModal from "@/components/modals/TransactionDetailsModal";
 import { Transaction } from "@/lib/types";
 import { useRouter } from "next/navigation";
 
@@ -10,8 +12,22 @@ interface RecentTransactionsProps {
   onRefresh: () => void;
 }
 
-const RecentTransactions: React.FC<RecentTransactionsProps> = ({ data }) => {
+const RecentTransactions: React.FC<RecentTransactionsProps> = ({
+  data,
+  onRefresh,
+}) => {
   const router = useRouter();
+  const [selectedTxn, setSelectedTxn] = useState<Transaction | null>(null);
+
+  const handleClose = () => setSelectedTxn(null);
+  const handleUpdate = async () => {
+    onRefresh();
+    handleClose();
+  };
+  const handleDelete = async () => {
+    onRefresh();
+    handleClose();
+  };
 
   return (
     <div className="col-span-2 bg-white rounded-lg border border-gray-200">
@@ -32,10 +48,24 @@ const RecentTransactions: React.FC<RecentTransactionsProps> = ({ data }) => {
           {data.length === 0 ? (
             <p className="text-gray-500">Nessuna transazione</p>
           ) : (
-            data.map((t) => <TransactionCard key={t.id} transaction={t} />)
+            data.map((t) => (
+              <TransactionCard
+                key={t.id}
+                transaction={t}
+                onClick={() => setSelectedTxn(t)}
+              />
+            ))
           )}
         </div>
       </div>
+
+      <TransactionDetailsModal
+        transaction={selectedTxn}
+        onClose={handleClose}
+        onUpdate={handleUpdate}
+        onDelete={handleDelete}
+        readOnly={true}
+      />
     </div>
   );
 };

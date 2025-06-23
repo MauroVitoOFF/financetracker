@@ -33,7 +33,7 @@ export default function Settings() {
   };
 
   return (
-    <>
+    <div className="bg-gray-50 min-h-screen space-y-8">
       <Header title="Impostazioni" description="Gestisci le tue preferenze" />
 
       <Tabs defaultValue="categories">
@@ -93,6 +93,6 @@ export default function Settings() {
           </div>
         </TabsContent>
       </Tabs>
-    </>
+    </div>
   );
 }

@@ -29,6 +29,7 @@ interface Props {
   onClose: () => void;
   onDelete: (transactionId: number) => void;
   onUpdate: (transaction: Transaction) => void;
+  readOnly?: boolean;
 }
 
 const TransactionDetailsModal: React.FC<Props> = ({
@@ -36,6 +37,7 @@ const TransactionDetailsModal: React.FC<Props> = ({
   onClose,
   onDelete,
   onUpdate,
+  readOnly = false,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState<Transaction | null>(null);
@@ -68,6 +70,8 @@ const TransactionDetailsModal: React.FC<Props> = ({
     onClose();
   };
 
+  const showActions = !readOnly;
+
   return (
     <Dialog open={!!transaction} onOpenChange={onClose}>
       <DialogContent className="max-w-md" showCloseButton={false}>
@@ -78,12 +82,11 @@ const TransactionDetailsModal: React.FC<Props> = ({
             </DialogTitle>
 
             <div className="flex items-center gap-3">
-              {!isEditing ? (
+              {showActions && !isEditing && (
                 <>
                   <Button variant="ghost" size="icon" onClick={handleEdit}>
                     <Edit className="w-4 h-4" />
                   </Button>
-
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button variant="ghost" size="icon">
@@ -105,17 +108,9 @@ const TransactionDetailsModal: React.FC<Props> = ({
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
-
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={onClose}
-                    aria-label="Chiudi"
-                  >
-                    <XCircle className="w-4 h-4 text-gray-500 hover:text-gray-700" />
-                  </Button>
                 </>
-              ) : (
+              )}
+              {isEditing && showActions && (
                 <>
                   <Button variant="ghost" size="icon" onClick={handleSave}>
                     <Save className="w-4 h-4" />
@@ -125,13 +120,20 @@ const TransactionDetailsModal: React.FC<Props> = ({
                   </Button>
                 </>
               )}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onClose}
+                aria-label="Chiudi"
+              >
+                <XCircle className="w-4 h-4 text-gray-500 hover:text-gray-700" />
+              </Button>
             </div>
           </div>
         </DialogHeader>
 
         <div className="space-y-6">
           <div className="space-y-4">
-            {/* TITOLO */}
             <div>
               <Label htmlFor="title">Titolo</Label>
               {!isEditing ? (
@@ -146,11 +148,11 @@ const TransactionDetailsModal: React.FC<Props> = ({
                     )
                   }
                   className="mt-1"
+                  disabled={readOnly}
                 />
               )}
             </div>
 
-            {/* IMPORTO */}
             <div>
               <Label htmlFor="amount">Importo</Label>
               {!isEditing ? (
@@ -175,12 +177,12 @@ const TransactionDetailsModal: React.FC<Props> = ({
                     setEditForm((prev) => (prev ? { ...prev, amount } : null));
                   }}
                   className="mt-1"
+                  disabled={readOnly}
                 />
               )}
             </div>
           </div>
 
-          {/* CATEGORIA E DATA */}
           <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-100">
             <div>
               <Label htmlFor="category">Categoria</Label>
@@ -196,6 +198,7 @@ const TransactionDetailsModal: React.FC<Props> = ({
                     )
                   }
                   className="mt-1"
+                  disabled={readOnly}
                 />
               )}
             </div>
@@ -222,12 +225,12 @@ const TransactionDetailsModal: React.FC<Props> = ({
                     )
                   }
                   className="mt-1"
+                  disabled={readOnly}
                 />
               )}
             </div>
           </div>
 
-          {/* DESCRIZIONE */}
           <div className="pt-4 border-t border-gray-100">
             <Label htmlFor="description">Descrizione</Label>
             {!isEditing ? (
@@ -243,13 +246,13 @@ const TransactionDetailsModal: React.FC<Props> = ({
                 }
                 className="mt-1"
                 rows={3}
+                disabled={readOnly}
               />
             )}
           </div>
         </div>
 
-        {/* FOOTER EDITING */}
-        {isEditing && (
+        {isEditing && showActions && (
           <div className="flex justify-end gap-3 pt-6 border-t border-gray-100">
             <Button variant="outline" onClick={handleCancel}>
               Annulla

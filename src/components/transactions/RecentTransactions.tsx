@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import TransactionCard from "./TransactionCard";
-import TransactionDetailsModal from "@/components/modals/TransactionDetailsModal";
+import TransactionCard from "../transactions/TransactionItem";
+import TransactionDetailsModal from "@/components/transactions/TransactionDetailsModal";
 import { Transaction } from "@/lib/types";
 import { useRouter } from "next/navigation";
 

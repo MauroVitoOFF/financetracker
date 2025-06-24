@@ -8,6 +8,17 @@ export interface Transaction {
   type: "income" | "expense";
 }
 
+export interface Subscription {
+  id: number;
+  name: string;
+  amount: number;
+  category: string;
+  nextPayment: string;
+  frequency: "Mensile" | "Annuale" | string;
+  status: "active" | "paused";
+  color?: string;
+}
+
 export interface Category {
   id: number;
   name: string;

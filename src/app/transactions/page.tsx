@@ -1,8 +1,10 @@
 "use client";
-
 import { useState, useEffect, useCallback } from "react";
 import Header from "@/components/layout/Header";
-import TransactionCard from "@/components/dashboard/TransactionCard";
+import TransactionCard from "@/components/transactions/TransactionItem";
+import AddTransactionModal from "@/components/transactions/AddTransactionModal";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 import {
   deleteTransaction,
   getTransactions,
@@ -10,7 +12,6 @@ import {
 } from "@/lib/db";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -27,17 +28,16 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { Search, Filter, CalendarIcon } from "lucide-react";
 import { Transaction } from "@/lib/types";
-import TransactionDetailsModal from "@/components/modals/TransactionDetailsModal";
+import TransactionDetailsModal from "@/components/transactions/TransactionDetailsModal";
 
 type TypeFilter = "all" | "expense" | "income";
 
 export default function Transactions() {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
-  const [dateFilter, setDateFilter] = useState<Date | undefined>();
+  const [dateFilter, setDateFilter] = useState<Date | undefined>(undefined);
 
   const [isLoading, setIsLoading] = useState(true);
-
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [selectedTxn, setSelectedTxn] = useState<Transaction | null>(null);
 
@@ -45,14 +45,9 @@ export default function Transactions() {
     setIsLoading(true);
     const expenseData = await getTransactions("expense");
     const incomeData = await getTransactions("income");
-
-    const combined = [...expenseData, ...incomeData];
-
-    // Ordina dalla più recente alla più vecchia
-    combined.sort(
+    const combined = [...expenseData, ...incomeData].sort(
       (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
     );
-
     setTransactions(combined);
     setIsLoading(false);
   }, []);
@@ -74,20 +69,19 @@ export default function Transactions() {
 
   const totalIncome = filtered
     .filter((t) => t.type === "income")
-    .reduce((sum, t) => sum + t.amount, 0);
+    .reduce((s, t) => s + t.amount, 0);
   const totalExpense = filtered
     .filter((t) => t.type === "expense")
-    .reduce((sum, t) => sum + t.amount, 0);
+    .reduce((s, t) => s + t.amount, 0);
   const netBalance = totalIncome - totalExpense;
 
-  const handleUpdate = async (updated: Transaction) => {
-    await updateTransaction(updated);
-    refresh();
+  const handleUpdate = async (txn: Transaction) => {
+    await updateTransaction(txn);
+    await refresh();
   };
-
   const handleDelete = async (id: number) => {
     await deleteTransaction(id);
-    refresh();
+    await refresh();
   };
 
   return (
@@ -95,8 +89,17 @@ export default function Transactions() {
       <Header
         title="Transazioni"
         description="Gestisci e visualizza le tue transazioni"
-        showAddTransactionButton
-        onTransactionAdded={refresh}
+        actionButton={
+          <AddTransactionModal type="expense" onTransactionAdded={refresh}>
+            <Button
+              size="lg"
+              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-transform duration-200 transform hover:scale-105"
+            >
+              <Plus className="w-5 h-5 mr-2" />
+              Nuova Transazione
+            </Button>
+          </AddTransactionModal>
+        }
       />
 
       {/* Filtro e ricerca */}
@@ -111,7 +114,6 @@ export default function Transactions() {
           />
         </div>
 
-        {/* Button filtro */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -139,7 +141,6 @@ export default function Transactions() {
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* Filter data */}
         <Popover>
           <PopoverTrigger asChild>
             <Button
@@ -210,7 +211,6 @@ export default function Transactions() {
         )}
       </div>
 
-      {/* Modal dettagli */}
       <TransactionDetailsModal
         transaction={selectedTxn}
         onClose={() => setSelectedTxn(null)}

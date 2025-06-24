@@ -11,6 +11,7 @@ import {
   addSubscription,
   deleteSubscription,
   getSubscriptions,
+  updateSubscription,
 } from "@/lib/db";
 import { Subscription } from "@/lib/types";
 import { Plus } from "lucide-react";
@@ -28,7 +29,8 @@ export default function Subscriptions() {
 
   // 🍀 Edit
   const handleEdit = async (subscription: Subscription) => {
-    console.log("Modifica abbonamento", subscription);
+    await updateSubscription(subscription);
+    await refreshSubscriptions();
   };
 
   // ❌ Delete

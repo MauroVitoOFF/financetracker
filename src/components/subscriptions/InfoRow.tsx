@@ -1,4 +1,3 @@
-// InfoRow.tsx
 "use client";
 import React from "react";
 import { Input } from "@/components/ui/input";
@@ -50,7 +49,7 @@ export default function InfoRow({
                 <Button
                   variant="outline"
                   className={cn(
-                    "w-full justify-start text-left font-normal", // aggiunto text-left
+                    "w-full text-left justify-start font-normal",
                     !value && "text-muted-foreground"
                   )}
                 >
@@ -62,14 +61,18 @@ export default function InfoRow({
                 <Calendar
                   mode="single"
                   selected={value ? new Date(value) : undefined}
-                  onSelect={(date) => date && onChange(date.toISOString())}
+                  onSelect={(date) => {
+                    if (date) {
+                      onChange(date.toISOString());
+                    }
+                  }}
                   autoFocus
                 />
               </PopoverContent>
             </Popover>
           ) : selectOptions ? (
             <Select value={value} onValueChange={onChange}>
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder={`Seleziona ${label.toLowerCase()}`} />
               </SelectTrigger>
               <SelectContent>
@@ -81,7 +84,11 @@ export default function InfoRow({
               </SelectContent>
             </Select>
           ) : (
-            <Input value={value} onChange={(e) => onChange(e.target.value)} />
+            <Input
+              value={value}
+              className="text-left"
+              onChange={(e) => onChange(e.target.value)}
+            />
           )
         ) : (
           <p className="font-medium">{value}</p>

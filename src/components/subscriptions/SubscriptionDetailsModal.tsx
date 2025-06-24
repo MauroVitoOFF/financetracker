@@ -1,13 +1,14 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Subscription } from "@/lib/types";
+import InfoRow from "./InfoRow";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Edit,
   Trash2,
@@ -16,7 +17,6 @@ import {
   XCircle,
   Save,
 } from "lucide-react";
-import { Subscription } from "@/lib/types";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,8 +27,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "../ui/alert-dialog";
-import { Input } from "../ui/input";
-import InfoRow from "./InfoRow";
 
 interface Props {
   onClose: () => void;
@@ -56,6 +54,25 @@ const SubscriptionDetailsModal: React.FC<Props> = ({
   const { id, name, color, category, amount, frequency, nextPayment, status } =
     subscription;
 
+  const calcNext = (dateStr: string, freq: string): string => {
+    const date = new Date(dateStr);
+    switch (freq) {
+      case "Mensile":
+        date.setMonth(date.getMonth() + 1);
+        break;
+      case "Annuale":
+        date.setFullYear(date.getFullYear() + 1);
+        break;
+      case "Settimanale":
+        date.setDate(date.getDate() + 7);
+        break;
+      case "Trimestrale":
+        date.setMonth(date.getMonth() + 3);
+        break;
+    }
+    return date.toISOString();
+  };
+
   const handleEdit = () => setIsEditing(true);
   const handleCancel = () => {
     setIsEditing(false);
@@ -63,11 +80,15 @@ const SubscriptionDetailsModal: React.FC<Props> = ({
   };
 
   const handleSave = () => {
-    if (editForm) {
-      onEdit(editForm);
-      setIsEditing(false);
-      onClose();
+    if (!editForm) return;
+
+    if (new Date(editForm.nextPayment) <= new Date()) {
+      editForm.nextPayment = calcNext(editForm.nextPayment, editForm.frequency);
     }
+
+    onEdit(editForm);
+    setIsEditing(false);
+    onClose();
   };
 
   const handleDelete = () => {
@@ -157,12 +178,12 @@ const SubscriptionDetailsModal: React.FC<Props> = ({
 
         <div className="space-y-6 py-4">
           <InfoRow
-            icon={<CreditCard />}
+            icon={<CreditCard className="w-5 h-5 text-gray-400" />}
             label="Importo"
             value={
               isEditing
-                ? editFormatter.format(amount)
-                : viewFormatter.format(amount)
+                ? editFormatter.format(editForm.amount)
+                : viewFormatter.format(subscription.amount)
             }
             isEditing={isEditing}
             onChange={(val) =>

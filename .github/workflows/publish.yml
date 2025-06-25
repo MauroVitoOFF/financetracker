@@ -28,7 +28,6 @@ jobs:
         with:
           node-version: lts/*
           cache: 'npm' # o npm/pnpm
-          cache-dependency-path: './package-lock.json'
 
       - name: Install dependencies (Ubuntu only)
         if: matrix.platform == 'ubuntu-22.04'

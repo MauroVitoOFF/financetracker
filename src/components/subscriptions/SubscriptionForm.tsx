@@ -62,8 +62,10 @@ const colors = [
 ];
 
 const SubscriptionForm: React.FC<FormProps> = ({ data, onChange }) => {
-  const update = (key: keyof SubscriptionFormData, value: any) =>
-    onChange({ ...data, [key]: value });
+  const update = <K extends keyof SubscriptionFormData>(
+    key: K,
+    value: SubscriptionFormData[K]
+  ) => onChange({ ...data, [key]: value });
 
   return (
     <div className="space-y-6">
@@ -157,9 +159,10 @@ const SubscriptionForm: React.FC<FormProps> = ({ data, onChange }) => {
           <SelectGroup
             options={colors.map((c) => c.name)}
             value={colors.find((c) => c.value === data.color)?.name || ""}
-            onChange={(name) =>
-              update("color", colors.find((c) => c.name === name)?.value!)
-            }
+            onChange={(name) => {
+              const selected = colors.find((c) => c.name === name)!;
+              update("color", selected.value);
+            }}
             renderItem={(name) => {
               const col = colors.find((c) => c.name === name)!;
               return (

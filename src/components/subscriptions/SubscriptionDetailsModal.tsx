@@ -51,8 +51,7 @@ const SubscriptionDetailsModal: React.FC<Props> = ({
 
   if (!subscription || !editForm) return null;
 
-  const { id, name, color, category, amount, frequency, nextPayment, status } =
-    subscription;
+  const { id } = subscription;
 
   const calcNext = (dateStr: string, freq: string): string => {
     const date = new Date(dateStr);

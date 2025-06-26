@@ -19,7 +19,7 @@ export function AppUpdateHandler() {
                 switch (event.event) {
                   case "Started":
                     toast(`Installazione v${update.version}`, {
-                      description: "Preparando il riavvio...",
+                      description: "Riavviando...",
                       duration: 60000,
                     });
                     break;

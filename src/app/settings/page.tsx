@@ -1,9 +1,10 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import CategoriesTab from "@/components/settings/CategoriesTab";
 import Header from "@/components/layout/Header";
 import { Button } from "@/components/ui/button";
+import { getVersion, getTauriVersion } from "@tauri-apps/api/app";
 import {
   AlertDialog,
   AlertDialogTrigger,
@@ -20,6 +21,8 @@ import { toast } from "sonner";
 
 export default function Settings() {
   const [isClearing, setIsClearing] = useState(false);
+  const [appVersion, setAppVersion] = useState<string>("...");
+  const [tauriVersion, setTauriVersion] = useState<string>("...");
 
   const handleClear = async () => {
     setIsClearing(true);
@@ -31,6 +34,11 @@ export default function Settings() {
     }
     setIsClearing(false);
   };
+
+  useEffect(() => {
+    getVersion().then(setAppVersion);
+    getTauriVersion().then(setTauriVersion);
+  }, []);
 
   return (
     <div className="bg-gray-50 min-h-screen space-y-8">
@@ -90,6 +98,15 @@ export default function Settings() {
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
+          </div>
+
+          <div className="p-4 border rounded-lg bg-gray-50">
+            <h4 className="font-medium mb-2">Versione Attuale</h4>
+            <p className="text-sm text-gray-700">
+              App version: <span className="font-semibold">{appVersion}</span>
+              <br />
+              Runtime: <span className="font-semibold">{tauriVersion}</span>
+            </p>
           </div>
         </TabsContent>
       </Tabs>

@@ -36,8 +36,3 @@ jobs:
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
-      - name: Copy release to public repo
-        uses: softprops/action-gh-release@v1
-        with:
-          repository: MauroVitoOFF/financetracker-releases
-          token: ${{ secrets.GITHUB_TOKEN }}

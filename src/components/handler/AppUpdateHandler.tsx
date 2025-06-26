@@ -1,20 +1,20 @@
 "use client";
 
 import { useEffect } from "react";
-import * as tauriUpdater from "@tauri-apps/plugin-updater";
+import { check } from "@tauri-apps/plugin-updater";
 import { relaunch } from "@tauri-apps/plugin-process";
 import { toast } from "sonner";
 
 export function AppUpdateHandler() {
   useEffect(() => {
     async function checkUpdates() {
-      const update = await tauriUpdater.check();
-      if (update?.version) {
+      const update = await check();
+      if (update) {
         toast(`Aggiornamento disponibile: v${update.version}`, {
           description: update.body,
           action: {
             label: "Aggiorna ora",
-            onClick: () => {
+            onClick: async () => {
               update.downloadAndInstall((event) => {
                 switch (event.event) {
                   case "Started":
@@ -28,9 +28,10 @@ export function AppUpdateHandler() {
                     break;
 
                   case "Finished":
-                    relaunch();
+                    break;
                 }
               });
+              await relaunch();
             },
           },
         });

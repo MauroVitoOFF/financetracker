@@ -192,7 +192,7 @@ export default function Transactions() {
         </div>
       )}
 
-      {/* Lista transazioni */}
+      {/* Lista transazioni (Card) */}
       <div className="bg-white p-6 rounded-lg border space-y-4">
         {isLoading ? (
           [...Array(3)].map((_, i) => (

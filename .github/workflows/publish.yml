@@ -3,7 +3,7 @@ name: publish
 on:
   workflow_dispatch:
   push:
-    branches: [ release ]
+    branches: [release]
 
 jobs:
   publish-tauri:
@@ -27,8 +27,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: lts/*
-          cache: 'npm' # o npm/pnpm
-          cache-dependency-path: './package-lock.json'
+          cache: "npm" # o npm/pnpm
+          cache-dependency-path: "./package-lock.json"
 
       - name: Install dependencies (Ubuntu only)
         if: matrix.platform == 'ubuntu-22.04'
@@ -39,15 +39,15 @@ jobs:
       - name: Install Rust via toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ''
+          targets: ""
 
       - name: Rust build cache
         uses: swatinem/rust-cache@v2
         with:
-          workspaces: './src-tauri -> target'
+          workspaces: "./src-tauri -> target"
 
       - name: Install frontend deps
-        run: yarn install  # o npm install / pnpm install
+        run: yarn install # o npm install / pnpm install
 
       - name: Build & publish with Tauri
         uses: tauri-apps/tauri-action@dev
@@ -57,8 +57,8 @@ jobs:
           TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
         with:
           tagName: app-v__VERSION__
-          releaseName: 'App v__VERSION__'
-          releaseBody: 'Release auto generata'
+          releaseName: "App v__VERSION__"
+          releaseBody: "Release auto generata"
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}

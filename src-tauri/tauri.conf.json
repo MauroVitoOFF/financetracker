@@ -1,0 +1,47 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+  "productName": "financetracker",
+  "version": "0.1.0",
+  "identifier": "com.maurovito.financetracker",
+  "build": {
+    "frontendDist": "../out",
+    "devUrl": "http://localhost:3000",
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Finance Tracker",
+        "width": 1720,
+        "height": 880,
+        "resizable": true,
+        "fullscreen": false
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "createUpdaterArtifacts": true,
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  },
+  "plugins": {
+    "updater": {
+      "active": true,
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDkwMEZFMzcxMDBDOTg4QjAKUldTd2lNa0FjZU1Qa09TVStQdjA4SzROK3M1bXdRTkpiTi9WQklSNWlOZ1l6RGJVL09YZTI5UDEK",
+      "endpoint": [
+        "https://github.com/MauroVitoOFF/financetracker/releases/latest/download/latest.json"
+      ]
+    }
+  }
+}

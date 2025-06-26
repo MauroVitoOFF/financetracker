@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect } from "react";
 import * as tauriUpdater from "@tauri-apps/plugin-updater";
 import { relaunch } from "@tauri-apps/plugin-process";

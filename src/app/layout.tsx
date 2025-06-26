@@ -6,6 +6,7 @@ import Sidebar from "@/components/layout/Sidebar";
 import { Toaster } from "sonner";
 import { useEffect, useState } from "react";
 import { initSchema } from "@/lib/db";
+import { AppUpdateHandler } from "@/components/handler/AppUpdateHandler";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -60,6 +61,7 @@ export default function RootLayout({
           <div className="max-w-6xl mx-auto">
             <Toaster position="bottom-right" offset={20} />
             <Sidebar />
+            <AppUpdateHandler />
             {children}
           </div>
         </div>

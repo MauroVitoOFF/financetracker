@@ -19,6 +19,7 @@ jobs:
         with: 
           node-version: lts/*
           cache: 'npm'
+          cache-dependency-path: './package-lock.json'
       - uses: dtolnay/rust-toolchain@stable
       - name: build deps (Linux)
         if: matrix.platform == 'ubuntu-22.04'

@@ -37,7 +37,7 @@ jobs:
           prerelease: false
           args: ${{ matrix.args }}
       - name: Copy release to public repo
-      - uses: marchbold/copy-release@v2
+        uses: marchbold/copy-release@v2
         with:
           source_repo: MauroVitoOFF/financetracker
           destination_repo: MauroVitoOFF/financetracker-releases

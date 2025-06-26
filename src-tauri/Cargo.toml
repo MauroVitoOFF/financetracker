@@ -1,10 +1,10 @@
 [package]
-name = "app"
-version = "0.1.0"
+name = "financetracker"
+version = "1.0.0"
 description = "A Tauri App"
-authors = ["you"]
+authors = ["Vito"]
 license = ""
-repository = ""
+repository = "financetracker"
 edition = "2021"
 rust-version = "1.77.2"
 

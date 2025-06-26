@@ -1,0 +1,13 @@
+{
+  "version": "v1.0.0",
+  "notes": "Note",
+  "pub_date": "25/06/2025",
+  "platforms": {
+    "darwin-x86_64": {
+      "url": ".../app.tar.gz",
+      "signature": "<contenuto .sig>"
+    },
+    "windows-x86_64": { "url": ".../app.zip", "signature": "..." },
+    "linux-x86_64": { "url": ".../app.AppImage.tar.gz", "signature": "..." }
+  }
+}

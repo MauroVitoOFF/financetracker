@@ -44,7 +44,7 @@ export default function Dashboard() {
     <div className="bg-gray-50 min-h-screen space-y-8">
       <Header
         title="Dashboard"
-        description="Panoramica delle tue finanze"
+        description="Gestione delle tue finanze"
         actionButton={
           <AddTransactionModal
             type="expense"

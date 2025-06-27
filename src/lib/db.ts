@@ -45,9 +45,14 @@ export async function initSchema() {
     );
   `);
 
+  const existing = await db.select<{ count: number }[]>(
+    `SELECT COUNT(*) as count FROM categories`
+  );
+
   // categorie default (come prima)
-  await db.execute(`
-    INSERT OR IGNORE INTO categories (name, type, icon) VALUES
+  if (existing[0]?.count === 0) {
+    await db.execute(`
+    INSERT INTO categories (name, type, icon) VALUES
       ('Alimentari', 'expense', 'ShoppingCart'),
       ('Trasporti', 'expense', 'Car'),
       ('Svago', 'expense', 'Gamepad2'),
@@ -61,6 +66,7 @@ export async function initSchema() {
       ('Bonus', 'income', 'Gift'),
       ('Altro', 'income', 'MoreHorizontal');
   `);
+  }
 }
 
 // ————————————————— TRANSAZIONI —————————————————

@@ -19,6 +19,7 @@ import {
 import { clearAllData } from "@/lib/db";
 import { toast } from "sonner";
 import { check } from "@tauri-apps/plugin-updater";
+import { relaunch } from "@tauri-apps/plugin-process";
 
 export default function Settings() {
   const [isClearing, setIsClearing] = useState(false);
@@ -35,7 +36,23 @@ export default function Settings() {
             action: {
               label: "Aggiorna Ora",
               onClick: async () => {
-                console.log("Installazione aggiornamento");
+                shouldUpdate.downloadAndInstall((event) => {
+                  switch (event.event) {
+                    case "Started":
+                      toast(`Installazione v${shouldUpdate.version}`, {
+                        description: "Riavviando...",
+                        duration: 60000,
+                      });
+                      break;
+
+                    case "Progress":
+                      break;
+
+                    case "Finished":
+                      break;
+                  }
+                });
+                await relaunch();
               },
             },
           }

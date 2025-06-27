@@ -6,7 +6,9 @@ import Sidebar from "@/components/layout/Sidebar";
 import { Toaster } from "sonner";
 import { useEffect, useState } from "react";
 import { initSchema } from "@/lib/db";
-import { AppUpdateHandler } from "@/components/handler/AppUpdateHandler";
+import { AppUpdateHandler } from "@/components/update/AppUpdateHandler";
+import { getVersion } from "@tauri-apps/api/app";
+import UpdateModal from "@/components/update/UpdateModal";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -24,17 +26,29 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const [isLoading, setIsLoading] = useState(true);
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
 
   useEffect(() => {
     initSchema()
       .then(() => {
-        // Aggiungiamo un ritardo minimo per evitare flash del loader
         setTimeout(() => setIsLoading(false), 500);
       })
       .catch((error) => {
         console.error(error);
         setIsLoading(false);
       });
+
+    const checkVersion = async () => {
+      const current = await getVersion();
+      const stored = localStorage.getItem("app_version");
+
+      if (stored !== current) {
+        setShowUpdateModal(true);
+        localStorage.setItem("app_version", current);
+      }
+    };
+
+    checkVersion();
   }, []);
 
   if (isLoading) {
@@ -53,19 +67,25 @@ export default function RootLayout({
   }
 
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <div className="min-h-screen bg-gray-50 pl-20 pr-8 py-8">
-          <div className="max-w-6xl mx-auto">
-            <Toaster position="bottom-right" offset={20} />
-            <Sidebar />
-            <AppUpdateHandler />
-            {children}
+    <>
+      {showUpdateModal && (
+        <UpdateModal onClose={() => setShowUpdateModal(false)} />
+      )}
+
+      <html lang="en">
+        <body
+          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        >
+          <div className="min-h-screen bg-gray-50 pl-20 pr-8 py-8">
+            <div className="max-w-6xl mx-auto">
+              <Toaster position="bottom-right" offset={20} />
+              <Sidebar />
+              <AppUpdateHandler />
+              {children}
+            </div>
           </div>
-        </div>
-      </body>
-    </html>
+        </body>
+      </html>
+    </>
   );
 }

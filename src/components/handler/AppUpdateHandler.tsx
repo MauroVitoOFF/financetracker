@@ -35,6 +35,8 @@ export function AppUpdateHandler() {
             },
           },
         });
+      } else {
+        toast("App aggiornata all'ultima versione");
       }
     }
     checkUpdates();

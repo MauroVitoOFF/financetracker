@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "financetracker",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "identifier": "com.maurovito.financetracker",
   "build": {
     "frontendDist": "../out",
@@ -40,7 +40,7 @@
       "active": true,
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDkwMEZFMzcxMDBDOTg4QjAKUldTd2lNa0FjZU1Qa09TVStQdjA4SzROK3M1bXdRTkpiTi9WQklSNWlOZ1l6RGJVL09YZTI5UDEK",
       "endpoints": [
-        "https://github.com/MauroVitoOFF/financetracker-releases/releases/latest/download/latest.json"
+        "https://github.com/MauroVitoOFF/financetracker/releases/latest/download/latest.json"
       ]
     }
   }

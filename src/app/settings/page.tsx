@@ -18,11 +18,35 @@ import {
 } from "@/components/ui/alert-dialog";
 import { clearAllData } from "@/lib/db";
 import { toast } from "sonner";
+import { check } from "@tauri-apps/plugin-updater";
 
 export default function Settings() {
   const [isClearing, setIsClearing] = useState(false);
   const [appVersion, setAppVersion] = useState<string>("...");
   const [tauriVersion, setTauriVersion] = useState<string>("...");
+
+  const checkForUpdate = async () => {
+    try {
+      const shouldUpdate = await check();
+      if (shouldUpdate) {
+        toast(
+          `Aggiornamento disponibile: v${shouldUpdate.version}. Riavvia per installare.`,
+          {
+            action: {
+              label: "Aggiorna Ora",
+              onClick: async () => {
+                console.log("Installazione aggiornamento");
+              },
+            },
+          }
+        );
+      } else {
+        toast.success("L'app è già aggiornata!");
+      }
+    } catch (e) {
+      toast.error("Errore durante il controllo degli aggiornamenti.");
+    }
+  };
 
   const handleClear = async () => {
     setIsClearing(true);
@@ -58,8 +82,7 @@ export default function Settings() {
         </TabsContent>
 
         <TabsContent value="data" className="space-y-6">
-          {/* Sezione Esporta... rimane invariata */}
-
+          {/* Zona Pericolosa */}
           <div className="p-4 border border-red-200 bg-red-50 rounded-lg">
             <h4 className="font-medium text-red-900 mb-2">Zona Pericolosa</h4>
             <p className="text-sm text-red-700 mb-4">
@@ -82,8 +105,8 @@ export default function Settings() {
                     Conferma Eliminazione Dati
                   </AlertDialogTitle>
                   <AlertDialogDescription>
-                    Sei sicuro di voler cancellare **tutte** le transazioni?
-                    Questa azione è irreversibile.
+                    Sei sicuro di voler cancellare <strong>tutte</strong> le
+                    transazioni? Questa azione è irreversibile.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -100,13 +123,18 @@ export default function Settings() {
             </AlertDialog>
           </div>
 
-          <div className="p-4 border rounded-lg bg-gray-50">
-            <h4 className="font-medium mb-2">Versione Attuale</h4>
+          {/* Info versione */}
+          <div className="p-4 border rounded-lg bg-gray-50 space-y-3">
+            <h4 className="font-medium">Versione Attuale</h4>
             <p className="text-sm text-gray-700">
               App version: <span className="font-semibold">{appVersion}</span>
               <br />
               Runtime: <span className="font-semibold">{tauriVersion}</span>
             </p>
+
+            <Button onClick={checkForUpdate} className="mt-2">
+              Controlla aggiornamenti
+            </Button>
           </div>
         </TabsContent>
       </Tabs>

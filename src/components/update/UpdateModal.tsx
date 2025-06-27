@@ -20,7 +20,7 @@ export default function UpdateModal({ onClose }: { onClose: () => void }) {
           <p>🧩 Migliorata la gestione degli abbonamenti</p>
           <p>
             ⚙️ Aggiunto pulsante nelle impostazioni per controllare ed
-            eventualmente aggiornare l'applicazione
+            eventualmente aggiornare l applicazione
           </p>
           <p>🐞 Risolti bug nel salvataggio delle categorie</p>
         </div>

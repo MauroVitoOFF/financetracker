@@ -44,7 +44,7 @@ export default function Settings() {
         toast.success("L'app è già aggiornata!");
       }
     } catch (e) {
-      toast.error("Errore durante il controllo degli aggiornamenti.");
+      toast.error("Errore durante il controllo degli aggiornamenti." + e);
     }
   };
 

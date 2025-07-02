@@ -29,7 +29,6 @@ interface Props {
   onClose: () => void;
   onDelete: (transactionId: number) => void;
   onUpdate: (transaction: Transaction) => void;
-  readOnly?: boolean;
 }
 
 const TransactionDetailsModal: React.FC<Props> = ({
@@ -37,7 +36,6 @@ const TransactionDetailsModal: React.FC<Props> = ({
   onClose,
   onDelete,
   onUpdate,
-  readOnly = false,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState<Transaction | null>(null);
@@ -50,6 +48,9 @@ const TransactionDetailsModal: React.FC<Props> = ({
   if (!transaction) return null;
 
   const isIncome = transaction.type === "income";
+  const isFromSubscription = !!transaction.subscriptionId;
+  const isReadOnly = transaction.isRecurring || isFromSubscription;
+  const showActions = !isReadOnly;
 
   const handleEdit = () => setIsEditing(true);
   const handleCancel = () => {
@@ -69,8 +70,6 @@ const TransactionDetailsModal: React.FC<Props> = ({
     onDelete(transaction.id);
     onClose();
   };
-
-  const showActions = !readOnly;
 
   return (
     <Dialog open={!!transaction} onOpenChange={onClose}>
@@ -132,7 +131,14 @@ const TransactionDetailsModal: React.FC<Props> = ({
           </div>
         </DialogHeader>
 
-        <div className="space-y-6">
+        {isReadOnly && (
+          <div className="text-sm text-yellow-700 dark:text-yellow-300 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 p-3 rounded">
+            Questa transazione è stata generata automaticamente (ricorrente o da
+            abbonamento) e non può essere modificata o eliminata manualmente.
+          </div>
+        )}
+
+        <div className="space-y-6 mt-2">
           <div className="space-y-4">
             <div>
               <Label htmlFor="title">Titolo</Label>
@@ -148,7 +154,7 @@ const TransactionDetailsModal: React.FC<Props> = ({
                     )
                   }
                   className="mt-1"
-                  disabled={readOnly}
+                  disabled={isReadOnly}
                 />
               )}
             </div>
@@ -177,7 +183,7 @@ const TransactionDetailsModal: React.FC<Props> = ({
                     setEditForm((prev) => (prev ? { ...prev, amount } : null));
                   }}
                   className="mt-1"
-                  disabled={readOnly}
+                  disabled={isReadOnly}
                 />
               )}
             </div>
@@ -198,7 +204,7 @@ const TransactionDetailsModal: React.FC<Props> = ({
                     )
                   }
                   className="mt-1"
-                  disabled={readOnly}
+                  disabled={isReadOnly}
                 />
               )}
             </div>
@@ -225,7 +231,7 @@ const TransactionDetailsModal: React.FC<Props> = ({
                     )
                   }
                   className="mt-1"
-                  disabled={readOnly}
+                  disabled={isReadOnly}
                 />
               )}
             </div>
@@ -246,8 +252,25 @@ const TransactionDetailsModal: React.FC<Props> = ({
                 }
                 className="mt-1"
                 rows={3}
-                disabled={readOnly}
+                disabled={isReadOnly}
               />
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-100">
+            <div>
+              <Label>Ricorrente</Label>
+              <p className="mt-1 text-sm">
+                {transaction.isRecurring ? "Sì" : "No"}
+              </p>
+            </div>
+            {transaction.isRecurring && (
+              <div>
+                <Label>Frequenza</Label>
+                <p className="mt-1 text-sm">
+                  {transaction.recurringFrequency || "—"}
+                </p>
+              </div>
             )}
           </div>
         </div>

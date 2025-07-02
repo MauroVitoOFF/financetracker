@@ -1,20 +1,20 @@
 interface HeaderProps {
   title: string;
   description: string;
-  actionButton?: React.ReactNode;
+  actionButtons?: React.ReactNode; // ← rinominato e supporta più pulsanti
 }
 
 const Header: React.FC<HeaderProps> = ({
   title,
   description,
-  actionButton,
+  actionButtons,
 }) => (
-  <div className="flex items-center justify-between mb-8">
+  <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
     <div>
       <h1 className="text-2xl font-semibold text-gray-900 mb-2">{title}</h1>
       <p className="text-gray-600">{description}</p>
     </div>
-    {actionButton}
+    <div className="flex gap-2 flex-wrap">{actionButtons}</div>
   </div>
 );
 

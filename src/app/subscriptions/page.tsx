@@ -59,18 +59,21 @@ export default function Subscriptions() {
       <Header
         title="Abbonamenti"
         description="Gestisci e visualizza i tuoi abbonamenti"
-        actionButton={
-          <AddSubscriptionModal onAdd={handleSubscriptionAdded}>
-            <Button
-              size="lg"
-              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition transform hover:scale-105"
-            >
-              <Plus className="w-5 h-5 mr-2" />
-              Nuovo Abbonamento
-            </Button>
-          </AddSubscriptionModal>
+        actionButtons={
+          <>
+            <AddSubscriptionModal onAdd={handleSubscriptionAdded}>
+              <Button
+                size="lg"
+                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition transform hover:scale-105"
+              >
+                <Plus className="w-5 h-5 mr-2" />
+                Nuovo Abbonamento
+              </Button>
+            </AddSubscriptionModal>
+          </>
         }
       />
+
       <SubscriptionStats subscriptions={subscriptions} />
       <div className="bg-white p-6 rounded-lg border space-y-4">
         {subscriptions.map((sub) => (

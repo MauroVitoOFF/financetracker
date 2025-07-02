@@ -6,6 +6,11 @@ export interface Transaction {
   category: string;
   date: string;
   type: "income" | "expense";
+  isRecurring: boolean;
+  installments?: number | null;
+  recurringFrequency?: string | null;
+  recurringEndDate?: string | null;
+  subscriptionId?: number | null;
 }
 
 export interface Subscription {

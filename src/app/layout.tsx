@@ -5,10 +5,14 @@ import "./globals.css";
 import Sidebar from "@/components/layout/Sidebar";
 import { Toaster } from "sonner";
 import { useEffect, useState } from "react";
-import { initSchema } from "@/lib/db";
+import {
+  initSchema,
+  processRecurringTransactions,
+  processSubscriptions,
+} from "@/lib/db";
 import { AppUpdateHandler } from "@/components/update/AppUpdateHandler";
 import { getVersion } from "@tauri-apps/api/app";
-import UpdateModal from "@/components/update/UpdateModal";
+import UpdateModal from "@/config/UpdateModal";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,6 +41,9 @@ export default function RootLayout({
         console.error(error);
         setIsLoading(false);
       });
+
+    processSubscriptions();
+    processRecurringTransactions();
 
     const checkVersion = async () => {
       const current = await getVersion();

@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import Header from "@/components/layout/Header";
-import TransactionCard from "@/components/transactions/TransactionItem";
+import TransactionItem from "@/components/transactions/TransactionItem";
 import AddTransactionModal from "@/components/transactions/AddTransactionModal";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
@@ -89,7 +89,7 @@ export default function Transactions() {
       <Header
         title="Transazioni"
         description="Gestisci e visualizza le tue transazioni"
-        actionButton={
+        actionButtons={
           <AddTransactionModal type="expense" onTransactionAdded={refresh}>
             <Button
               size="lg"
@@ -202,10 +202,11 @@ export default function Transactions() {
           <p className="text-gray-500">Nessuna transazione trovata.</p>
         ) : (
           filtered.map((tx) => (
-            <TransactionCard
+            <TransactionItem
               key={tx.id}
               transaction={tx}
               onClick={setSelectedTxn}
+              onDelete={handleDelete}
             />
           ))
         )}

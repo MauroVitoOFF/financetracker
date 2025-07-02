@@ -1,6 +1,7 @@
 // src/lib/db.ts
 import Database from "@tauri-apps/plugin-sql";
 import type { Transaction, Category, Subscription } from "./types";
+import { addMonths, addWeeks, addYears } from "date-fns";
 
 export async function getDB() {
   return await Database.load("sqlite:finance.db");
@@ -31,7 +32,6 @@ export async function initSchema() {
     );
   `);
 
-  // Nuovo: subscriptions
   await db.execute(`
     CREATE TABLE IF NOT EXISTS subscriptions (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -67,6 +67,37 @@ export async function initSchema() {
       ('Altro', 'income', 'MoreHorizontal');
   `);
   }
+
+  const columns = await db.select<{ name: string }[]>(
+    `PRAGMA table_info(transactions)`
+  );
+
+  const newTransactionColumn = async (name: string, ddl: string) => {
+    if (!columns.some((c) => c.name === name)) {
+      await db.execute(`ALTER TABLE transactions ADD COLUMN ${ddl}`);
+    }
+  };
+
+  await newTransactionColumn(
+    "isRecurring",
+    "isRecurring INTEGER NOT NULL DEFAULT 0"
+  );
+  await newTransactionColumn(
+    "installments",
+    "installments INTEGER DEFAULT NULL"
+  );
+  await newTransactionColumn(
+    "recurringFrequency",
+    "recurringFrequency TEXT DEFAULT NULL"
+  );
+  await newTransactionColumn(
+    "recurringEndDate",
+    "recurringEndDate TEXT DEFAULT NULL"
+  );
+  await newTransactionColumn(
+    "subscriptionId",
+    "subscriptionId INTEGER DEFAULT NULL"
+  );
 }
 
 // ————————————————— TRANSAZIONI —————————————————
@@ -76,9 +107,23 @@ export async function addTransaction(
 ): Promise<void> {
   const db = await getDB();
   await db.execute(
-    `INSERT INTO transactions (amount, title, description, category, date, type)
-     VALUES ($1, $2, $3, $4, $5, $6)`,
-    [txn.amount, txn.title, txn.description, txn.category, txn.date, txn.type]
+    `INSERT INTO transactions (
+      amount, title, description, category, date, type,
+      isRecurring, installments, recurringFrequency, recurringEndDate, subscriptionId
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+    [
+      txn.amount,
+      txn.title,
+      txn.description,
+      txn.category,
+      txn.date,
+      txn.type,
+      txn.isRecurring ? 1 : 0,
+      txn.installments ?? null,
+      txn.recurringFrequency ?? null,
+      txn.recurringEndDate ?? null,
+      txn.subscriptionId ?? null,
+    ]
   );
 }
 
@@ -86,22 +131,28 @@ export async function getTransactions(
   type: "income" | "expense"
 ): Promise<Transaction[]> {
   const db = await getDB();
-  return await db.select<Transaction[]>(
-    `SELECT id, amount, title, description, category, date, type
+  const rows = await db.select<Transaction[]>(
+    `SELECT id, amount, title, description, category, date, type,
+            isRecurring, installments, recurringFrequency, recurringEndDate, subscriptionId
      FROM transactions WHERE type = $1 ORDER BY date DESC`,
     [type]
   );
+
+  return rows.map((t) => ({ ...t, isRecurring: !!t.isRecurring }));
 }
 
 export async function getRecentTransactions(
   limit: number = 5
 ): Promise<Transaction[]> {
   const db = await getDB();
-  return await db.select<Transaction[]>(
-    `SELECT id, amount, title, description, category, date, type
+  const rows = await db.select<Transaction[]>(
+    `SELECT id, amount, title, description, category, date, type,
+            isRecurring, installments, recurringFrequency, recurringEndDate
      FROM transactions ORDER BY date DESC, id DESC LIMIT $1`,
     [limit]
   );
+
+  return rows.map((t) => ({ ...t, isRecurring: !!t.isRecurring }));
 }
 
 export async function updateTransaction(txn: Transaction): Promise<void> {
@@ -113,8 +164,12 @@ export async function updateTransaction(txn: Transaction): Promise<void> {
        description = $3,
        category = $4,
        date = $5,
-       type = $6
-     WHERE id = $7`,
+       type = $6,
+       isRecurring = $7,
+       installments = $8,
+       recurringFrequency = $9,
+       recurringEndDate = $10
+     WHERE id = $11`,
     [
       txn.amount,
       txn.title,
@@ -122,6 +177,10 @@ export async function updateTransaction(txn: Transaction): Promise<void> {
       txn.category,
       txn.date,
       txn.type,
+      txn.isRecurring ? 1 : 0,
+      txn.installments ?? null,
+      txn.recurringFrequency ?? null,
+      txn.recurringEndDate ?? null,
       txn.id,
     ]
   );
@@ -130,6 +189,102 @@ export async function updateTransaction(txn: Transaction): Promise<void> {
 export async function deleteTransaction(id: number): Promise<void> {
   const db = await getDB();
   await db.execute(`DELETE FROM transactions WHERE id = $1`, [id]);
+}
+
+export async function processRecurringTransactions(): Promise<void> {
+  const db = await getDB();
+  const today = new Date().toISOString().split("T")[0]; // "YYYY-MM-DD"
+
+  const recurringTxns = await db.select<Transaction[]>(
+    `SELECT * FROM transactions
+     WHERE isRecurring = 1 AND recurringFrequency IS NOT NULL`
+  );
+
+  for (const txn of recurringTxns) {
+    if (!txn.recurringFrequency) continue;
+
+    const lastDate = new Date(txn.date);
+    let nextDate = calcNextDate(lastDate, txn.recurringFrequency);
+
+    // Continua finché la prossima data è passata
+    while (nextDate <= new Date(today)) {
+      // Se è oltre recurringEndDate (se definita), esci
+      if (
+        txn.recurringEndDate &&
+        new Date(nextDate) > new Date(txn.recurringEndDate)
+      ) {
+        break;
+      }
+
+      // Evita duplicati: controlla se transazione simile esiste già per quella data
+      const exists = await db.select<{ count: number }[]>(
+        `SELECT COUNT(*) as count FROM transactions
+         WHERE title = $1 AND amount = $2 AND date = $3 AND isRecurring = 1`,
+        [txn.title, txn.amount, nextDate.toISOString().split("T")[0]]
+      );
+      if (exists[0]?.count > 0) break;
+
+      // Inserisci nuova transazione ricorrente
+      await addTransaction({
+        ...txn,
+        date: nextDate.toISOString().split("T")[0],
+      });
+
+      nextDate = calcNextDate(nextDate, txn.recurringFrequency);
+    }
+  }
+}
+
+export async function processSubscriptions(): Promise<void> {
+  const db = await getDB();
+  const today = new Date();
+
+  const subscriptions = await db.select<Subscription[]>(
+    `SELECT * FROM subscriptions WHERE status = 'active'`
+  );
+
+  for (const sub of subscriptions) {
+    let paymentDate = new Date(sub.nextPayment);
+
+    while (paymentDate <= today) {
+      const formattedDate = paymentDate.toISOString().split("T")[0];
+
+      // Inserisci la spesa solo se non esiste già
+      const existing = await db.select<{ count: number }[]>(
+        `SELECT COUNT(*) as count FROM transactions
+         WHERE title = $1 AND amount = $2 AND date = $3`,
+        [sub.name, sub.amount, formattedDate]
+      );
+
+      if (existing[0]?.count === 0) {
+        await addTransaction({
+          title: sub.name,
+          description: "Pagamento abbonamento",
+          amount: sub.amount,
+          category: sub.category,
+          date: formattedDate,
+          type: "expense",
+          isRecurring: false,
+          installments: null,
+          recurringFrequency: null,
+          recurringEndDate: null,
+          subscriptionId: sub.id,
+        });
+      }
+
+      // Calcola la prossima scadenza
+      const next = calcNextDate(paymentDate, sub.frequency);
+
+      // Aggiorna nextPayment nel DB
+      await db.execute(
+        `UPDATE subscriptions SET nextPayment = $1 WHERE id = $2`,
+        [next.toISOString(), sub.id]
+      );
+
+      // Continua se servono più rate (es. se è passato più di un ciclo)
+      paymentDate = next;
+    }
+  }
 }
 
 export async function loadStats(): Promise<{
@@ -254,19 +409,10 @@ export async function getSubscriptions(): Promise<Subscription[]> {
     `SELECT * FROM subscriptions ORDER BY nextPayment ASC`
   );
 
-  return subs.map((sub) => {
-    const now = new Date();
-    let next = new Date(sub.nextPayment);
-
-    if (next <= now) {
-      next = new Date(calcNext(sub.nextPayment, sub.frequency));
-      db.execute(`UPDATE subscriptions SET nextPayment = $1 WHERE id = $2`, [
-        next.toISOString(),
-        sub.id,
-      ]);
-    }
-    return { ...sub, nextPayment: next.toISOString() };
-  });
+  return subs.map((sub) => ({
+    ...sub,
+    nextPayment: new Date(sub.nextPayment).toISOString(),
+  }));
 }
 
 export async function updateSubscription(sub: Subscription): Promise<void> {
@@ -303,4 +449,19 @@ export async function clearAllData(): Promise<void> {
   const db = await getDB();
   await db.execute(`DELETE FROM transactions;`);
   await db.execute(`DELETE FROM subscriptions;`);
+}
+
+function calcNextDate(date: Date, frequency: string): Date {
+  switch (frequency) {
+    case "Settimanale":
+      return addWeeks(date, 1);
+    case "Mensile":
+      return addMonths(date, 1);
+    case "Trimestrale":
+      return addMonths(date, 3);
+    case "Annuale":
+      return addYears(date, 1);
+    default:
+      return date;
+  }
 }

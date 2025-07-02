@@ -14,6 +14,7 @@ import {
 } from "@/lib/db";
 import { Transaction } from "@/lib/types";
 import TransactionDetailsModal from "@/components/transactions/TransactionDetailsModal";
+import UpdateModal from "@/config/UpdateModal";
 
 export default function Dashboard() {
   const [stats, setStats] = useState({ total: 0, income: 0, expense: 0 });
@@ -45,27 +46,26 @@ export default function Dashboard() {
       <Header
         title="Dashboard"
         description="Gestione delle tue finanze"
-        actionButton={
-          <AddTransactionModal
-            type="expense"
-            onTransactionAdded={handleTransactionAdded}
-          >
-            <Button
-              size="lg"
-              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+        actionButtons={
+          <>
+            <AddTransactionModal
+              type="expense"
+              onTransactionAdded={handleTransactionAdded}
             >
-              <Plus className="w-5 h-5 mr-2" /> Nuova Transazione
-            </Button>
-          </AddTransactionModal>
+              <Button
+                size="lg"
+                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+              >
+                <Plus className="w-5 h-5 mr-2" /> Nuova Transazione
+              </Button>
+            </AddTransactionModal>
+          </>
         }
       />
-
       <MainStats {...stats} />
-
       <div className="grid grid-cols-3 gap-8">
         <RecentTransactions data={recent} onRefresh={refreshRecent} />
       </div>
-
       <TransactionDetailsModal
         transaction={selectedTxn}
         onClose={() => setSelectedTxn(null)}

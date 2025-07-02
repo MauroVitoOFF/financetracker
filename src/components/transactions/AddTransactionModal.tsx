@@ -102,6 +102,9 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
       description,
       date: date.toISOString(),
       category,
+      isRecurring,
+      installments: installments ? parseInt(installments) : null,
+      recurringFrequency: frequency,
     });
 
     toast.success("Transazione aggiunta!");

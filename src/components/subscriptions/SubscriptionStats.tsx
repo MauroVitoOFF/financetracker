@@ -14,21 +14,27 @@ const itDate = new Intl.DateTimeFormat("it-IT", {
 
 export default function SubscriptionStats({ subscriptions }: Props) {
   const active = subscriptions.filter((s) => s.status === "active");
+
   const totalMonthly = active.reduce(
     (sum, s) => sum + (s.frequency === "Mensile" ? s.amount : s.amount / 12),
     0
   );
 
-  const next = active.length
-    ? active.reduce((a, b) =>
-        new Date(a.nextPayment).getTime() < new Date(b.nextPayment).getTime()
-          ? a
-          : b
-      )
-    : null;
+  const nextDate = active.reduce((min, sub) => {
+    const subDate = new Date(sub.nextPayment);
+    return subDate < min ? subDate : min;
+  }, new Date(active[0]?.nextPayment ?? Date.now()));
 
-  const subtitle = next
-    ? `${next.name} – ${itDate.format(new Date(next.nextPayment))}`
+  const upcomingSubs = active.filter(
+    (s) => new Date(s.nextPayment).toDateString() === nextDate.toDateString()
+  );
+
+  const totalUpcoming = upcomingSubs.reduce((sum, s) => sum + s.amount, 0);
+
+  const subtitle = upcomingSubs.length
+    ? `${itDate.format(nextDate)} – ${upcomingSubs
+        .map((s) => `${s.name} (€${s.amount.toFixed(2)})`)
+        .join(", ")}`
     : "Nessun abbonamento attivo";
 
   return (
@@ -42,7 +48,7 @@ export default function SubscriptionStats({ subscriptions }: Props) {
       <StatCard
         icon={<AlertCircle className="w-5 h-5 text-orange-500" />}
         title="Prossimo Pagamento"
-        amount={next ? next.amount : 0}
+        amount={totalUpcoming}
         subtitle={subtitle}
       />
     </div>
@@ -71,7 +77,11 @@ function StatCard({
       <p className="text-2xl font-semibold text-gray-900">
         {isCurrency ? `€${amount.toFixed(2)}` : amount}
       </p>
-      {subtitle && <p className="text-sm text-gray-500 mt-1">{subtitle}</p>}
+      {subtitle && (
+        <p className="text-sm text-gray-500 mt-1 whitespace-pre-line">
+          {subtitle}
+        </p>
+      )}
     </div>
   );
 }

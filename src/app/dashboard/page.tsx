@@ -14,7 +14,6 @@ import {
 } from "@/lib/db";
 import { Transaction } from "@/lib/types";
 import TransactionDetailsModal from "@/components/transactions/TransactionDetailsModal";
-import UpdateModal from "@/config/UpdateModal";
 
 export default function Dashboard() {
   const [stats, setStats] = useState({ total: 0, income: 0, expense: 0 });

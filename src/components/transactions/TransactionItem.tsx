@@ -140,7 +140,7 @@ export default function TransactionItem({
           </DialogHeader>
           <p className="text-sm text-gray-600 dark:text-gray-300">
             Sei sicuro di voler eliminare la transazione{" "}
-            <strong>{title}</strong>? L'azione è irreversibile.
+            <strong>{title}</strong>? Azione irreversibile.
           </p>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setShowConfirm(false)}>

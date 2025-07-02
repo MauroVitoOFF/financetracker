@@ -384,25 +384,6 @@ export async function addSubscription(
   );
 }
 
-const calcNext = (dateStr: string, freq: string): string => {
-  const date = new Date(dateStr);
-  switch (freq) {
-    case "Mensile":
-      date.setMonth(date.getMonth() + 1);
-      break;
-    case "Annuale":
-      date.setFullYear(date.getFullYear() + 1);
-      break;
-    case "Settimanale":
-      date.setDate(date.getDate() + 7);
-      break;
-    case "Trimestrale":
-      date.setMonth(date.getMonth() + 3);
-      break;
-  }
-  return date.toISOString();
-};
-
 export async function getSubscriptions(): Promise<Subscription[]> {
   const db = await getDB();
   const subs = await db.select<Subscription[]>(

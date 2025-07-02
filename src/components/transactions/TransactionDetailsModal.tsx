@@ -29,6 +29,7 @@ interface Props {
   onClose: () => void;
   onDelete: (transactionId: number) => void;
   onUpdate: (transaction: Transaction) => void;
+  readOnly?: boolean;
 }
 
 const TransactionDetailsModal: React.FC<Props> = ({
@@ -36,6 +37,7 @@ const TransactionDetailsModal: React.FC<Props> = ({
   onClose,
   onDelete,
   onUpdate,
+  readOnly,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState<Transaction | null>(null);
@@ -49,7 +51,7 @@ const TransactionDetailsModal: React.FC<Props> = ({
 
   const isIncome = transaction.type === "income";
   const isFromSubscription = !!transaction.subscriptionId;
-  const isReadOnly = transaction.isRecurring || isFromSubscription;
+  const isReadOnly = readOnly || transaction.isRecurring || isFromSubscription;
   const showActions = !isReadOnly;
 
   const handleEdit = () => setIsEditing(true);

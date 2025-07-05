@@ -13,12 +13,12 @@ interface StatCardProps {
   valueColor?: string;
 }
 
-const StatCard: React.FC<StatCardProps> = ({
+const StatCard = ({
   icon: Icon,
   label,
   value,
   valueColor = "text-gray-900",
-}) => (
+}: StatCardProps) => (
   <div className="bg-white rounded-lg border border-gray-200 p-6">
     <div className="flex items-center justify-between mb-4">
       <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
@@ -32,7 +32,7 @@ const StatCard: React.FC<StatCardProps> = ({
   </div>
 );
 
-const MainStats: React.FC<MainStatsProps> = ({ total, income, expense }) => (
+const MainStats = ({ total, income, expense }: MainStatsProps) => (
   <div className="grid grid-cols-4 gap-6 mb-8">
     <StatCard
       icon={CreditCard}

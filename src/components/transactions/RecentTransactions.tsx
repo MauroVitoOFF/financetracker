@@ -12,10 +12,7 @@ interface RecentTransactionsProps {
   onRefresh: () => void;
 }
 
-const RecentTransactions: React.FC<RecentTransactionsProps> = ({
-  data,
-  onRefresh,
-}) => {
+const RecentTransactions = ({ data, onRefresh }: RecentTransactionsProps) => {
   const router = useRouter();
   const [selectedTxn, setSelectedTxn] = useState<Transaction | null>(null);
 

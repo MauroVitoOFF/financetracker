@@ -59,7 +59,6 @@ export async function initSchema() {
       ('Casa', 'expense', 'Home'),
       ('Salute', 'expense', 'Heart'),
       ('Shopping', 'expense', 'ShoppingBag'),
-      ('Altro', 'expense', 'MoreHorizontal'),
       ('Stipendio', 'income', 'Briefcase'),
       ('Freelance', 'income', 'Laptop'),
       ('Investimenti', 'income', 'TrendingUp'),
@@ -189,6 +188,14 @@ export async function updateTransaction(txn: Transaction): Promise<void> {
 export async function deleteTransaction(id: number): Promise<void> {
   const db = await getDB();
   await db.execute(`DELETE FROM transactions WHERE id = $1`, [id]);
+}
+
+export async function bulkInsertTransactions(
+  transactions: Omit<Transaction, "id">[]
+): Promise<void> {
+  for (const txn of transactions) {
+    await addTransaction(txn);
+  }
 }
 
 export async function processRecurringTransactions(): Promise<void> {
@@ -430,6 +437,7 @@ export async function clearAllData(): Promise<void> {
   const db = await getDB();
   await db.execute(`DELETE FROM transactions;`);
   await db.execute(`DELETE FROM subscriptions;`);
+  await db.execute(`DELETE FROM categories;`);
 }
 
 function calcNextDate(date: Date, frequency: string): Date {

@@ -7,6 +7,20 @@
     "core:default",
     "sql:default",
     "sql:allow-execute",
-    "updater:default"
+    "updater:default",
+    "dialog:default",
+    "fs:default",
+    "fs:allow-write-text-file",
+    "fs:allow-desktop-write",
+    "fs:allow-document-write",
+    "fs:allow-download-write",
+    "fs:allow-appdata-write",
+    "fs:allow-appdata-read",
+    "fs:allow-appdata-write-recursive",
+    "fs:allow-appdata-read-recursive",
+    "fs:allow-applocaldata-write",
+    "fs:allow-applocaldata-read",
+    "fs:allow-applocaldata-write-recursive",
+    "fs:allow-applocaldata-read-recursive"
   ]
 }

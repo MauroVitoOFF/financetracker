@@ -5,6 +5,8 @@
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
+    "noUnusedLocals": true, // ⚠️ evidenzia variabili non usate
+    "noUnusedParameters": true, // ⚠️ evidenzia parametri non usati
     "noEmit": true,
     "esModuleInterop": true,
     "module": "esnext",

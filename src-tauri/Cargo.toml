@@ -1,6 +1,6 @@
 [package]
 name = "financetracker"
-version = "1.0.9"
+version = "1.1.0"
 description = "A Tauri App"
 authors = ["Vito"]
 license = ""
@@ -24,6 +24,8 @@ log = "0.4"
 tauri = { version = "2.5.0", features = [] }
 tauri-plugin-log = "2.0.0-rc"
 tauri-plugin-sql = { version = "2", features = ["sqlite"] }
+tauri-plugin-fs = "2"
+tauri-plugin-dialog = "2"
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-updater = "2"

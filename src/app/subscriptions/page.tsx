@@ -7,6 +7,7 @@ import { SubscriptionFormData } from "@/components/subscriptions/SubscriptionFor
 import SubscriptionItem from "@/components/subscriptions/SubscriptionItem";
 import SubscriptionStats from "@/components/subscriptions/SubscriptionStats";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   addSubscription,
   deleteSubscription,
@@ -18,13 +19,16 @@ import { Plus } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 export default function Subscriptions() {
+  const [isLoading, setIsLoading] = useState(true);
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [selectedSubscription, setSelectedSubscription] =
     useState<Subscription | null>(null);
 
   // 🔄 Aggiorna i dati (es. ricarica dal DB/API)
   const refreshSubscriptions = useCallback(async () => {
+    setIsLoading(true);
     setSubscriptions(await getSubscriptions());
+    setIsLoading(false);
   }, []);
 
   // 🍀 Edit
@@ -76,13 +80,21 @@ export default function Subscriptions() {
 
       <SubscriptionStats subscriptions={subscriptions} />
       <div className="bg-white p-6 rounded-lg border space-y-4">
-        {subscriptions.map((sub) => (
-          <SubscriptionItem
-            key={sub.id}
-            subscription={sub}
-            onClick={setSelectedSubscription}
-          />
-        ))}
+        {isLoading ? (
+          [...Array(3)].map((_, i) => (
+            <Skeleton key={i} className="h-16 w-full rounded-md" />
+          ))
+        ) : subscriptions.length === 0 ? (
+          <p className="text-gray-500">Nessun abbonamento trovato.</p>
+        ) : (
+          subscriptions.map((sub) => (
+            <SubscriptionItem
+              key={sub.id}
+              subscription={sub}
+              onClick={setSelectedSubscription}
+            />
+          ))
+        )}
       </div>
 
       <SubscriptionDetailsModal

@@ -59,13 +59,20 @@ export function BackupList({
         <ul className="space-y-2">
           {backups.map((file) => {
             const date = parseBackupDate(file);
+            const isExport = file.startsWith("financetracker-backup-");
+            const typeLabel = isExport ? "Esportato" : "Creato manualmente";
+
             const label = date
-              ? date.toLocaleString("it-IT", {
+              ? date.toLocaleDateString("it-IT", {
                   day: "2-digit",
                   month: "long",
                   year: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
+                  ...(isExport
+                    ? {} // solo la data per backup manuali
+                    : {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      }),
                 })
               : file;
 
@@ -75,8 +82,15 @@ export function BackupList({
                 className="flex items-center justify-between text-sm border p-2 rounded-md"
               >
                 <div>
-                  <div className="font-medium">{label}</div>
-                  <div className="text-xs text-gray-500">{file}</div>
+                  <div className="font-medium flex items-center gap-2">
+                    <span>{label}</span>
+                    <span className="text-xs px-2 py-0.5 bg-gray-100 border rounded-full text-gray-600">
+                      {typeLabel}
+                    </span>
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {typeLabel} &middot; {file}
+                  </div>
                 </div>
                 <div className="flex gap-2">
                   <Button

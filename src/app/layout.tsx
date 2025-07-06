@@ -13,6 +13,7 @@ import {
 import { AppUpdateHandler } from "@/components/update/AppUpdateHandler";
 import { getVersion } from "@tauri-apps/api/app";
 import UpdateModal from "@/config/UpdateModal";
+import { appVersion } from "@/lib/version";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -76,7 +77,10 @@ export default function RootLayout({
   return (
     <>
       {showUpdateModal && (
-        <UpdateModal onClose={() => setShowUpdateModal(false)} />
+        <UpdateModal
+          version={appVersion}
+          onClose={() => setShowUpdateModal(false)}
+        />
       )}
 
       <html lang="en">

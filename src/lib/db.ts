@@ -350,6 +350,31 @@ export async function addCategory(c: Omit<Category, "id">): Promise<void> {
 
 export async function deleteCategory(id: number): Promise<void> {
   const db = await getDB();
+
+  // Recupera la categoria per conoscerne il nome
+  const result = await db.select<{ name: string }[]>(
+    `SELECT name FROM categories WHERE id = $1`,
+    [id]
+  );
+
+  const categoryName = result[0]?.name;
+  if (!categoryName) {
+    throw new Error("Categoria non trovata.");
+  }
+
+  // Verifica se ci sono transazioni collegate
+  const usage = await db.select<{ count: number }[]>(
+    `SELECT COUNT(*) as count FROM transactions WHERE category = $1`,
+    [categoryName]
+  );
+
+  if (usage[0]?.count > 0) {
+    throw new Error(
+      "Impossibile eliminare la categoria: è associata a una o più transazioni."
+    );
+  }
+
+  // Elimina la categoria se non è usata
   await db.execute(`DELETE FROM categories WHERE id = $1`, [id]);
 }
 
@@ -368,6 +393,17 @@ export async function getCategoryById(id: number): Promise<Category | null> {
     [id]
   );
   return rows[0] ?? null;
+}
+
+export async function categoryNameExists(name: string): Promise<boolean> {
+  const db = await getDB();
+  const normalizedName = name.trim().toLowerCase();
+
+  const rows = await db.select<{ name: string }[]>(
+    `SELECT name FROM categories`
+  );
+
+  return rows.some((row) => row.name.trim().toLowerCase() === normalizedName);
 }
 
 // ————————————————— SUBSCRIPTIONS —————————————————

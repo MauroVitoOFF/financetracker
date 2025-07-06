@@ -1,3 +1,11 @@
+import { z } from "zod";
+import {
+  BackupDataSchema,
+  CategorySchema,
+  TransactionSchema,
+  SubscriptionSchema,
+} from "./validation";
+
 export interface Transaction {
   id: number;
   amount: number;
@@ -35,3 +43,13 @@ export interface MainStatsProps {
   prevStats: { total: number; income: number; expense: number };
   currentStats: { total: number; income: number; expense: number };
 }
+
+// Zod-based types for backup data
+export const TransactionBackupSchema = TransactionSchema.omit({ id: true });
+export const CategoryBackupSchema = CategorySchema.omit({ id: true });
+export const SubscriptionBackupSchema = SubscriptionSchema.omit({ id: true });
+
+export type TransactionBackup = z.infer<typeof TransactionBackupSchema>;
+export type CategoryBackup = z.infer<typeof CategoryBackupSchema>;
+export type SubscriptionBackup = z.infer<typeof SubscriptionBackupSchema>;
+export type BackupData = z.infer<typeof BackupDataSchema>;

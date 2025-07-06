@@ -8,11 +8,14 @@ import { Input } from "../ui/input";
 import IconPicker from "../ui/icon-picker";
 import {
   addCategory,
+  categoryNameExists,
   deleteCategory,
   getCategories,
   updateCategoryIcon,
 } from "@/lib/db";
 import { availableIcons } from "@/config/categories";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 interface Props {
   type: "income" | "expense";
@@ -30,6 +33,8 @@ export default function CategoriesTab({ type, label }: Props) {
   const [newName, setNewName] = useState("");
   const [newIcon, setNewIcon] = useState<LucideIcon>(availableIcons[0].icon);
 
+  const router = useRouter();
+
   useEffect(() => {
     (async () => {
       setCats(await getCategories(type));
@@ -39,6 +44,13 @@ export default function CategoriesTab({ type, label }: Props) {
   const handleAdd = async () => {
     const name = newName.trim();
     if (!name) return;
+
+    const exists = await categoryNameExists(name);
+    if (exists) {
+      toast.error("Esiste già una categoria con questo nome.");
+      return;
+    }
+
     const iconName = newIcon.displayName!;
     await addCategory({ name, type, icon: iconName });
     setNewName("");
@@ -46,9 +58,27 @@ export default function CategoriesTab({ type, label }: Props) {
     setCats(await getCategories(type));
   };
 
-  const handleDelete = async (id: number) => {
-    await deleteCategory(id);
-    setCats(await getCategories(type));
+  const handleDelete = async (category: Category) => {
+    try {
+      await deleteCategory(category.id);
+      setCats(await getCategories(type));
+      toast.success("Categoria eliminata.");
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        toast.error(error.message, {
+          action: {
+            label: "Visualizza transazioni",
+            onClick: () => {
+              localStorage.setItem("categoryFilter", category.name);
+              router.push("/transactions");
+              console.log("Naviga a transazioni filtrate");
+            },
+          },
+        });
+      } else {
+        toast.error("Errore sconosciuto durante l'eliminazione.");
+      }
+    }
   };
 
   const handleIconChange = async (id: number, iconName: string) => {
@@ -79,7 +109,7 @@ export default function CategoriesTab({ type, label }: Props) {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => handleDelete(c.id)}
+                onClick={() => handleDelete(c)}
                 className="text-red-600 hover:bg-red-50"
               >
                 <X className="w-4 h-4" />

@@ -151,7 +151,16 @@ export default function Settings() {
             }}
             onRestore={handleRestore}
             onDelete={(filename: string) => setBackupToDelete(filename)}
-            onExport={exportFullData}
+            onExport={async () => {
+              try {
+                const file = await exportFullData();
+                toast.success(`Esportazione completata: ${file}`);
+                await refreshBackups(); // ✅ aggiorna subito la lista
+              } catch (err) {
+                toast.error("Errore durante l'esportazione.");
+                console.error(err);
+              }
+            }}
             onImport={importFullData}
           />
 

@@ -37,6 +37,8 @@ export default function Transactions() {
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [dateFilter, setDateFilter] = useState<Date | undefined>(undefined);
 
+  const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
+
   const [isLoading, setIsLoading] = useState(true);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [selectedTxn, setSelectedTxn] = useState<Transaction | null>(null);
@@ -53,6 +55,14 @@ export default function Transactions() {
   }, []);
 
   useEffect(() => {
+    const storedCategory = localStorage.getItem("categoryFilter");
+    if (storedCategory) {
+      setCategoryFilter(storedCategory);
+      localStorage.removeItem("categoryFilter");
+    }
+  }, []);
+
+  useEffect(() => {
     void refresh();
   }, [refresh]);
 
@@ -60,11 +70,18 @@ export default function Transactions() {
     const textMatch =
       tx.description.toLowerCase().includes(search.toLowerCase()) ||
       tx.category.toLowerCase().includes(search.toLowerCase());
+
     const typeMatch = typeFilter === "all" || tx.type === typeFilter;
+
     const dateMatch = dateFilter
       ? new Date(tx.date).toDateString() === dateFilter.toDateString()
       : true;
-    return textMatch && typeMatch && dateMatch;
+
+    const categoryMatch =
+      !categoryFilter ||
+      tx.category.toLowerCase() === categoryFilter.toLowerCase();
+
+    return textMatch && typeMatch && dateMatch && categoryMatch;
   });
 
   const totalIncome = filtered
@@ -137,6 +154,36 @@ export default function Transactions() {
               <DropdownMenuRadioItem value="income">
                 Entrate
               </DropdownMenuRadioItem>
+            </DropdownMenuRadioGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              className="h-12 px-4 flex items-center space-x-2"
+            >
+              <Filter className="w-5 h-5" />
+              <span>{categoryFilter ?? "Categoria"}</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" sideOffset={4}>
+            <DropdownMenuLabel>Categoria</DropdownMenuLabel>
+            <DropdownMenuRadioGroup
+              value={categoryFilter ?? "all"}
+              onValueChange={(value) =>
+                setCategoryFilter(value === "all" ? null : value)
+              }
+            >
+              <DropdownMenuRadioItem value="all">Tutte</DropdownMenuRadioItem>
+              {Array.from(new Set(transactions.map((t) => t.category)))
+                .sort()
+                .map((cat) => (
+                  <DropdownMenuRadioItem key={cat} value={cat}>
+                    {cat}
+                  </DropdownMenuRadioItem>
+                ))}
             </DropdownMenuRadioGroup>
           </DropdownMenuContent>
         </DropdownMenu>

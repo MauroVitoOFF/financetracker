@@ -9,21 +9,10 @@ import {
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 
-export default function UpdateModal({
-  onClose,
-  version,
-}: {
-  onClose: () => void;
-  version: string;
-}) {
+export default function UpdateModal({ onClose }: { onClose: () => void }) {
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-lg p-0 overflow-hidden relative">
-        {/* Badge versione dinamico */}
-        <div className="absolute top-3 right-3 bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded-md shadow-sm">
-          v{version}
-        </div>
-
+      <DialogContent className="max-w-lg p-0 overflow-hidden">
         {/* Banner */}
         <div className="w-full h-46 relative bg-muted">
           <Image
@@ -35,7 +24,7 @@ export default function UpdateModal({
           />
         </div>
 
-        {/* Contenuto aggiornato */}
+        {/* Contenuto */}
         <div className="p-6 pt-4">
           <DialogHeader className="items-center text-center mb-4">
             <DialogTitle className="text-2xl font-bold">

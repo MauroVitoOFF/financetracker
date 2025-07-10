@@ -100,7 +100,7 @@ const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
       amount: parseFloat(amount),
       title,
       description,
-      date: date.toISOString(),
+      date: date.toISOString().split("T")[0],
       category,
       isRecurring,
       installments: installments ? parseInt(installments) : null,

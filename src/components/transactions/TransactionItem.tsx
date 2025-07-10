@@ -26,7 +26,7 @@ import { toast } from "sonner";
 interface TransactionItemProps {
   transaction: Transaction;
   onClick?: (txn: Transaction) => void;
-  onDelete?: (id: number) => void;
+  onDelete?: (id: number, deleteAll?: boolean) => void;
 }
 
 const italianDateFormatter = new Intl.DateTimeFormat("it-IT", {
@@ -159,7 +159,7 @@ export default function TransactionItem({
                   return;
                 }
 
-                onDelete?.(id);
+                onDelete?.(id, false); // 👈 elimina solo questa
 
                 toast("Transazione eliminata", {
                   description: `Hai eliminato "${title}" con successo.`,

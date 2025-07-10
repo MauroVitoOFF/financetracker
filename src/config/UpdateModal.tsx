@@ -35,16 +35,19 @@ export default function UpdateModal({ onClose }: { onClose: () => void }) {
           <div className="space-y-5 text-sm text-gray-700 dark:text-gray-300">
             <section>
               <p className="font-medium text-gray-900 dark:text-white mb-1">
-                💾 Backup e ripristino avanzati
+                🔁 Transazioni ricorrenti migliorate
               </p>
               <ul className="list-disc list-inside space-y-1">
-                <li>Backup firmati e verificati per evitare alterazioni</li>
-                <li>Ripristino completo con protezioni su categorie e dati</li>
                 <li>
-                  Interfaccia con etichette “Esportato” e “Creato manualmente”
+                  Supporto per transazioni “madre” con rate future collegate
                 </li>
-                <li>Limite massimo di 5 backup con gestione semplificata</li>
-                <li>Esportazione/Importazione manuale in formato JSON</li>
+                <li>
+                  Conferma su modifiche o cancellazioni per agire solo su una
+                  rata o su tutte
+                </li>
+                <li>
+                  Maggiore controllo e coerenza nel salvataggio delle ricorrenze
+                </li>
               </ul>
             </section>
 
@@ -55,6 +58,7 @@ export default function UpdateModal({ onClose }: { onClose: () => void }) {
               <ul className="list-disc list-inside space-y-1">
                 <li>Validazioni più rigide e gestione errori più robusta</li>
                 <li>Ristrutturazione del codice per maggiore affidabilità</li>
+                <li>Miglioramenti nelle performance e nella leggibilità</li>
               </ul>
             </section>
           </div>

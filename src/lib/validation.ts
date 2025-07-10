@@ -44,6 +44,7 @@ export const TransactionSchema = z.object({
   recurringFrequency: z.string().nullable(),
   recurringEndDate: z.string().nullable(),
   subscriptionId: z.number().nullable(),
+  parentId: z.number().nullable(),
 });
 
 export const CategorySchema = z.object({

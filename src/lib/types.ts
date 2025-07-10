@@ -19,6 +19,7 @@ export interface Transaction {
   recurringFrequency?: string | null;
   recurringEndDate?: string | null;
   subscriptionId?: number | null;
+  parentId?: number | null;
 }
 
 export interface Subscription {

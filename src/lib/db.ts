@@ -97,6 +97,7 @@ export async function initSchema() {
     "subscriptionId",
     "subscriptionId INTEGER DEFAULT NULL"
   );
+  await newTransactionColumn("parentId", "parentId INTEGER DEFAULT NULL");
 }
 
 // ————————————————— TRANSAZIONI —————————————————
@@ -108,8 +109,8 @@ export async function addTransaction(
   await db.execute(
     `INSERT INTO transactions (
       amount, title, description, category, date, type,
-      isRecurring, installments, recurringFrequency, recurringEndDate, subscriptionId
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+      isRecurring, installments, recurringFrequency, recurringEndDate, subscriptionId, parentId
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
     [
       txn.amount,
       txn.title,
@@ -122,6 +123,7 @@ export async function addTransaction(
       txn.recurringFrequency ?? null,
       txn.recurringEndDate ?? null,
       txn.subscriptionId ?? null,
+      txn.parentId ?? null,
     ]
   );
 }
@@ -132,7 +134,7 @@ export async function getTransactions(
   const db = await getDB();
   const rows = await db.select<Transaction[]>(
     `SELECT id, amount, title, description, category, date, type,
-            isRecurring, installments, recurringFrequency, recurringEndDate, subscriptionId
+            isRecurring, installments, recurringFrequency, recurringEndDate, subscriptionId, parentId
      FROM transactions WHERE type = $1 ORDER BY date DESC`,
     [type]
   );
@@ -154,8 +156,12 @@ export async function getRecentTransactions(
   return rows.map((t) => ({ ...t, isRecurring: !!t.isRecurring }));
 }
 
-export async function updateTransaction(txn: Transaction): Promise<void> {
+export async function updateTransaction(
+  txn: Transaction,
+  updateChildren: boolean = false
+): Promise<void> {
   const db = await getDB();
+
   await db.execute(
     `UPDATE transactions SET
        amount = $1,
@@ -183,11 +189,81 @@ export async function updateTransaction(txn: Transaction): Promise<void> {
       txn.id,
     ]
   );
+
+  if (updateChildren) {
+    await db.execute(
+      `UPDATE transactions SET
+       amount = $1,
+       title = $2,
+       description = $3,
+       category = $4,
+       recurringFrequency = $5,
+       recurringEndDate = $6,
+       installments = $7
+     WHERE parentId = $8 AND date > $9`,
+      [
+        txn.amount,
+        txn.title,
+        txn.description,
+        txn.category,
+        txn.recurringFrequency,
+        txn.recurringEndDate,
+        txn.installments,
+        txn.id,
+        txn.date,
+      ]
+    );
+  }
 }
 
-export async function deleteTransaction(id: number): Promise<void> {
+export async function hasRecurringChildren(
+  transactionId: number
+): Promise<boolean> {
   const db = await getDB();
-  await db.execute(`DELETE FROM transactions WHERE id = $1`, [id]);
+  const result = await db.select<{ count: number }[]>(
+    `SELECT COUNT(*) as count FROM transactions WHERE parentId = $1`,
+    [transactionId]
+  );
+  return result[0]?.count > 0;
+}
+
+export async function deleteTransaction(
+  id: number,
+  deleteAll: boolean = false
+): Promise<void> {
+  const db = await getDB();
+
+  console.log("→ deleteTransaction called with:", id, deleteAll);
+
+  if (deleteAll) {
+    const result = await db.select<{ id: number; date: string }[]>(
+      `SELECT id, date FROM transactions WHERE id = $1`,
+      [id]
+    );
+
+    const parent = result[0];
+    if (!parent) {
+      console.warn("⚠️ Transazione madre non trovata.");
+      return;
+    }
+
+    const linked = await db.select<{ id: number; date: string }[]>(
+      `SELECT id, date FROM transactions WHERE parentId = $1`,
+      [id]
+    );
+
+    console.log("→ Figlie trovate:", linked);
+
+    const deletionResult = await db.execute(
+      `DELETE FROM transactions WHERE id = $1 OR parentId = $1`,
+      [id]
+    );
+
+    console.log("✅ Eliminati madre + figlie:", deletionResult);
+  } else {
+    await db.execute(`DELETE FROM transactions WHERE id = $1`, [id]);
+    console.log("✅ Eliminata solo la transazione madre:", id);
+  }
 }
 
 export async function bulkInsertTransactions(
@@ -200,44 +276,85 @@ export async function bulkInsertTransactions(
 
 export async function processRecurringTransactions(): Promise<void> {
   const db = await getDB();
-  const today = new Date().toISOString().split("T")[0]; // "YYYY-MM-DD"
+  const today = new Date().toISOString().split("T")[0];
 
   const recurringTxns = await db.select<Transaction[]>(
     `SELECT * FROM transactions
-     WHERE isRecurring = 1 AND recurringFrequency IS NOT NULL`
+   WHERE isRecurring = 1 AND recurringFrequency IS NOT NULL AND parentId IS NULL`
+  );
+
+  console.log(
+    `Trovate ${recurringTxns.length} transazioni ricorrenti da processare.`
   );
 
   for (const txn of recurringTxns) {
     if (!txn.recurringFrequency) continue;
 
-    const lastDate = new Date(txn.date);
-    let nextDate = calcNextDate(lastDate, txn.recurringFrequency);
+    const lastDate = new Date(txn.date.split("T")[0]);
+    let nextDate = calcNextDate(lastDate, txn.recurringFrequency!);
 
-    // Continua finché la prossima data è passata
-    while (nextDate <= new Date(today)) {
-      // Se è oltre recurringEndDate (se definita), esci
+    console.log(`\n→ Transazione: ${txn.title} (ID: ${txn.id})`);
+    console.log(`  Ultima data: ${lastDate.toISOString().split("T")[0]}`);
+    console.log(
+      `  Prossima data calcolata: ${nextDate.toISOString().split("T")[0]}`
+    );
+
+    const existingChildren = await db.select<{ count: number }[]>(
+      `SELECT COUNT(*) as count FROM transactions WHERE parentId = $1`,
+      [txn.id]
+    );
+    const alreadyGenerated = existingChildren[0]?.count || 0;
+
+    const maxToGenerate =
+      txn.installments && txn.installments > 1
+        ? txn.installments - 1 - alreadyGenerated
+        : Infinity;
+
+    console.log(`  Figlie esistenti: ${alreadyGenerated}`);
+    console.log(`  Max generabili ora: ${maxToGenerate}`);
+
+    let generatedCount = 0;
+
+    while (nextDate <= new Date(today) && generatedCount < maxToGenerate) {
       if (
         txn.recurringEndDate &&
         new Date(nextDate) > new Date(txn.recurringEndDate)
       ) {
+        console.log(`  → STOP: superata la data di fine ricorrenza.`);
         break;
       }
 
-      // Evita duplicati: controlla se transazione simile esiste già per quella data
       const exists = await db.select<{ count: number }[]>(
         `SELECT COUNT(*) as count FROM transactions
-         WHERE title = $1 AND amount = $2 AND date = $3 AND isRecurring = 1`,
-        [txn.title, txn.amount, nextDate.toISOString().split("T")[0]]
+         WHERE (parentId = $1 OR id = $1) AND date = $2`,
+        [txn.id, nextDate.toISOString().split("T")[0]]
       );
-      if (exists[0]?.count > 0) break;
 
-      // Inserisci nuova transazione ricorrente
+      if (exists[0]?.count > 0) {
+        console.log(
+          `  ⚠️ Rata del ${
+            nextDate.toISOString().split("T")[0]
+          } già esistente. Skippata.`
+        );
+        nextDate = calcNextDate(nextDate, txn.recurringFrequency);
+        continue;
+      }
+
+      console.log(
+        `  ✅ Generata rata per il ${nextDate.toISOString().split("T")[0]}`
+      );
       await addTransaction({
         ...txn,
         date: nextDate.toISOString().split("T")[0],
+        parentId: txn.id,
       });
 
+      generatedCount++;
       nextDate = calcNextDate(nextDate, txn.recurringFrequency);
+    }
+
+    if (generatedCount === 0) {
+      console.log("  Nessuna nuova rata generata.");
     }
   }
 }
@@ -477,16 +594,33 @@ export async function clearAllData(): Promise<void> {
 }
 
 function calcNextDate(date: Date, frequency: string): Date {
+  const day = date.getDate();
+
+  let next: Date;
   switch (frequency) {
     case "Settimanale":
-      return addWeeks(date, 1);
+      next = addWeeks(date, 1);
+      break;
     case "Mensile":
-      return addMonths(date, 1);
+      next = addMonths(date, 1);
+      break;
     case "Trimestrale":
-      return addMonths(date, 3);
+      next = addMonths(date, 3);
+      break;
     case "Annuale":
-      return addYears(date, 1);
+      next = addYears(date, 1);
+      break;
     default:
       return date;
   }
+
+  // Se il mese nuovo non ha quel giorno, imposta l’ultimo disponibile
+  const lastDay = new Date(
+    next.getFullYear(),
+    next.getMonth() + 1,
+    0
+  ).getDate();
+  next.setDate(Math.min(day, lastDay));
+
+  return next;
 }

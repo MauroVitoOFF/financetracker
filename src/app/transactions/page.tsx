@@ -96,8 +96,9 @@ export default function Transactions() {
     await updateTransaction(txn);
     await refresh();
   };
-  const handleDelete = async (id: number) => {
-    await deleteTransaction(id);
+
+  const handleDelete = async (id: number, deleteAll: boolean = false) => {
+    await deleteTransaction(id, deleteAll);
     await refresh();
   };
 

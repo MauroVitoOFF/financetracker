@@ -1,38 +1,22 @@
+// Percorso: components/transactions/TransactionDetailsModal.tsx
+
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Edit, Trash2, Save, XCircle } from "lucide-react";
-import { cn } from "@/lib/utils";
-import type { Transaction } from "@/lib/types";
+import { useTransactionEditForm } from "@/hooks/useTransactionEditForm";
+import { EditToolbar } from "@/components/transactions/EditToolbar";
+import { TransactionForm } from "@/components/transactions/TransactionForm";
+import { ConfirmUpdateDialog } from "@/components/transactions/ConfirmUpdateDialog";
+import { ConfirmDeleteDialog } from "@/components/transactions/ConfirmDeleteDialog";
+import { hasRecurringChildren } from "@/lib/db";
+import type { Props } from "./types";
 
-interface Props {
-  transaction: Transaction | null;
-  onClose: () => void;
-  onDelete: (transactionId: number) => void;
-  onUpdate: (transaction: Transaction) => void;
-  readOnly?: boolean;
-}
-
-const TransactionDetailsModal: React.FC<Props> = ({
+export const TransactionDetailsModal: React.FC<Props> = ({
   transaction,
   onClose,
   onDelete,
@@ -40,38 +24,77 @@ const TransactionDetailsModal: React.FC<Props> = ({
   readOnly,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [editForm, setEditForm] = useState<Transaction | null>(null);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [confirmUpdateOpen, setConfirmUpdateOpen] = useState(false);
+  const [hasChildren, setHasChildren] = useState(false);
 
-  useEffect(() => {
-    setEditForm(transaction ? { ...transaction } : null);
-    setIsEditing(false);
-  }, [transaction]);
+  const {
+    editForm,
+    updateField,
+    hasChanged,
+    reset: resetForm,
+  } = useTransactionEditForm(transaction);
 
-  if (!transaction) return null;
-
-  const isIncome = transaction.type === "income";
-  const isFromSubscription = !!transaction.subscriptionId;
-  const isReadOnly = readOnly || transaction.isRecurring || isFromSubscription;
+  const isFromSubscription = !!transaction?.subscriptionId;
+  const isGeneratedRecurring = !!transaction?.parentId;
+  const isReadOnly = readOnly || isFromSubscription || isGeneratedRecurring;
   const showActions = !isReadOnly;
 
-  const handleEdit = () => setIsEditing(true);
-  const handleCancel = () => {
+  useEffect(() => {
     setIsEditing(false);
-    setEditForm({ ...transaction! });
-  };
+  }, [transaction?.id]);
 
-  const handleSave = () => {
-    if (editForm) {
+  useEffect(() => {
+    if (transaction?.isRecurring && !transaction.parentId) {
+      hasRecurringChildren(transaction.id).then(setHasChildren);
+    } else {
+      setHasChildren(false);
+    }
+  }, [transaction]);
+
+  const handleEdit = useCallback(() => {
+    setIsEditing(true);
+  }, []);
+
+  const handleCancel = useCallback(() => {
+    resetForm();
+    setIsEditing(false);
+  }, [resetForm]);
+
+  const handleSave = useCallback(() => {
+    if (!transaction || !hasChanged) return;
+
+    if (transaction.isRecurring && !transaction.parentId && hasChildren) {
+      setConfirmUpdateOpen(true);
+    } else {
       onUpdate(editForm);
       setIsEditing(false);
       onClose();
     }
-  };
+  }, [transaction, hasChanged, hasChildren, onUpdate, editForm, onClose]);
 
-  const handleDelete = () => {
-    onDelete(transaction.id);
-    onClose();
-  };
+  const handleConfirmedDelete = useCallback(
+    (deleteAll: boolean) => {
+      console.log("→ DELETE ALL:", deleteAll);
+      if (!transaction) return;
+      onDelete(transaction.id, deleteAll);
+      setConfirmDeleteOpen(false);
+      onClose();
+    },
+    [onDelete, transaction, onClose]
+  );
+
+  const handleConfirmedUpdate = useCallback(
+    (updateAll: boolean) => {
+      onUpdate(editForm, updateAll);
+      setConfirmUpdateOpen(false);
+      setIsEditing(false);
+      onClose();
+    },
+    [onUpdate, editForm, onClose]
+  );
+
+  if (!transaction) return null;
 
   return (
     <Dialog open={!!transaction} onOpenChange={onClose}>
@@ -82,209 +105,39 @@ const TransactionDetailsModal: React.FC<Props> = ({
               {isEditing ? "Modifica Transazione" : "Dettagli Transazione"}
             </DialogTitle>
 
-            <div className="flex items-center gap-3">
-              {showActions && !isEditing && (
-                <>
-                  <Button variant="ghost" size="icon" onClick={handleEdit}>
-                    <Edit className="w-4 h-4" />
-                  </Button>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <Trash2 className="w-4 h-4 text-red-600" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Elimina transazione</AlertDialogTitle>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Annulla</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={handleDelete}
-                          className="bg-red-600 hover:bg-red-700 text-white"
-                        >
-                          Elimina
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </>
-              )}
-              {isEditing && showActions && (
-                <>
-                  <Button variant="ghost" size="icon" onClick={handleSave}>
-                    <Save className="w-4 h-4" />
-                  </Button>
-                  <Button variant="ghost" size="icon" onClick={handleCancel}>
-                    <XCircle className="w-4 h-4 text-gray-500 hover:text-gray-700" />
-                  </Button>
-                </>
-              )}
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onClose}
-                aria-label="Chiudi"
-              >
-                <XCircle className="w-4 h-4 text-gray-500 hover:text-gray-700" />
-              </Button>
-            </div>
+            <EditToolbar
+              isEditing={isEditing}
+              canEdit={showActions}
+              onEdit={handleEdit}
+              onCancel={handleCancel}
+              onSave={handleSave}
+              onDelete={() => setConfirmDeleteOpen(true)}
+              onClose={onClose}
+            />
           </div>
         </DialogHeader>
 
-        {isReadOnly && (
-          <div className="text-sm text-yellow-700 dark:text-yellow-300 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 p-3 rounded">
-            Questa transazione è stata generata automaticamente (ricorrente o da
-            abbonamento) e non può essere modificata o eliminata manualmente.
-          </div>
+        <TransactionForm
+          transaction={transaction}
+          form={editForm}
+          onChange={updateField}
+          isEditing={isEditing}
+          readOnly={isReadOnly}
+        />
+        {showActions && (
+          <ConfirmDeleteDialog
+            open={confirmDeleteOpen}
+            hasChildren={hasChildren}
+            onCancel={() => setConfirmDeleteOpen(false)}
+            onConfirm={handleConfirmedDelete}
+          />
         )}
 
-        <div className="space-y-6 mt-2">
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="title">Titolo</Label>
-              {!isEditing ? (
-                <p className="mt-1 text-lg">{transaction.title || "—"}</p>
-              ) : (
-                <Input
-                  id="title"
-                  value={editForm?.title || ""}
-                  onChange={(e) =>
-                    setEditForm((prev) =>
-                      prev ? { ...prev, title: e.target.value } : null
-                    )
-                  }
-                  className="mt-1"
-                  disabled={isReadOnly}
-                />
-              )}
-            </div>
-
-            <div>
-              <Label htmlFor="amount">Importo</Label>
-              {!isEditing ? (
-                <span
-                  className={cn(
-                    "text-2xl font-bold",
-                    isIncome ? "text-green-600" : "text-red-600"
-                  )}
-                >
-                  {isIncome ? "+" : "-"}€
-                  {Math.abs(transaction.amount).toFixed(2)}
-                </span>
-              ) : (
-                <Input
-                  id="amount"
-                  type="number"
-                  step="0.01"
-                  value={Math.abs(editForm?.amount || 0)}
-                  onChange={(e) => {
-                    const val = parseFloat(e.target.value) || 0;
-                    const amount = isIncome ? val : -val;
-                    setEditForm((prev) => (prev ? { ...prev, amount } : null));
-                  }}
-                  className="mt-1"
-                  disabled={isReadOnly}
-                />
-              )}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-100">
-            <div>
-              <Label htmlFor="category">Categoria</Label>
-              {!isEditing ? (
-                <p className="mt-1 text-sm">{transaction.category || "—"}</p>
-              ) : (
-                <Input
-                  id="category"
-                  value={editForm?.category || ""}
-                  onChange={(e) =>
-                    setEditForm((prev) =>
-                      prev ? { ...prev, category: e.target.value } : null
-                    )
-                  }
-                  className="mt-1"
-                  disabled={isReadOnly}
-                />
-              )}
-            </div>
-
-            <div>
-              <Label htmlFor="date">Data</Label>
-              {!isEditing ? (
-                <p className="mt-1 text-sm">
-                  {new Date(transaction.date).toLocaleDateString("it-IT", {
-                    weekday: "long",
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
-                </p>
-              ) : (
-                <Input
-                  id="date"
-                  type="date"
-                  value={editForm?.date.split("T")[0] || ""}
-                  onChange={(e) =>
-                    setEditForm((prev) =>
-                      prev ? { ...prev, date: e.target.value } : null
-                    )
-                  }
-                  className="mt-1"
-                  disabled={isReadOnly}
-                />
-              )}
-            </div>
-          </div>
-
-          <div className="pt-4 border-t border-gray-100">
-            <Label htmlFor="description">Descrizione</Label>
-            {!isEditing ? (
-              <p className="mt-1 text-sm">{transaction.description || "—"}</p>
-            ) : (
-              <Textarea
-                id="description"
-                value={editForm?.description || ""}
-                onChange={(e) =>
-                  setEditForm((prev) =>
-                    prev ? { ...prev, description: e.target.value } : null
-                  )
-                }
-                className="mt-1"
-                rows={3}
-                disabled={isReadOnly}
-              />
-            )}
-          </div>
-
-          <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-100">
-            <div>
-              <Label>Ricorrente</Label>
-              <p className="mt-1 text-sm">
-                {transaction.isRecurring ? "Sì" : "No"}
-              </p>
-            </div>
-            {transaction.isRecurring && (
-              <div>
-                <Label>Frequenza</Label>
-                <p className="mt-1 text-sm">
-                  {transaction.recurringFrequency || "—"}
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {isEditing && showActions && (
-          <div className="flex justify-end gap-3 pt-6 border-t border-gray-100">
-            <Button variant="outline" onClick={handleCancel}>
-              Annulla
-            </Button>
-            <Button onClick={handleSave}>Salva modifiche</Button>
-          </div>
-        )}
+        <ConfirmUpdateDialog
+          open={confirmUpdateOpen}
+          onCancel={() => setConfirmUpdateOpen(false)}
+          onConfirm={handleConfirmedUpdate}
+        />
       </DialogContent>
     </Dialog>
   );

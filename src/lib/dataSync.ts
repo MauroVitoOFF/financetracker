@@ -91,6 +91,7 @@ export async function generateSignedPayload(): Promise<BackupData> {
       recurringFrequency,
       recurringEndDate,
       subscriptionId,
+      parentId,
       ...rest
     }) => ({
       ...rest,
@@ -98,6 +99,7 @@ export async function generateSignedPayload(): Promise<BackupData> {
       recurringFrequency: recurringFrequency ?? null,
       recurringEndDate: recurringEndDate ?? null,
       subscriptionId: subscriptionId ?? null,
+      parentId: parentId ?? null,
     })
   );
 

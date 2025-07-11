@@ -5,18 +5,10 @@ import Header from "@/components/layout/Header";
 import CategoriesTab from "@/components/settings/CategoriesTab";
 import { Button } from "@/components/ui/button";
 import { getVersion, getTauriVersion } from "@tauri-apps/api/app";
-import { clearAllData } from "@/lib/db";
 import { toast } from "sonner";
 import { check } from "@tauri-apps/plugin-updater";
 import { relaunch } from "@tauri-apps/plugin-process";
-import {
-  exportFullData,
-  importFullData,
-  createVersionedBackup,
-  listBackups,
-  restoreBackup,
-} from "@/lib/dataSync";
-import { BaseDirectory, remove } from "@tauri-apps/plugin-fs";
+import { importFullData, exportFullData } from "@/lib/dataSync";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,25 +22,17 @@ import {
 } from "@/components/ui/alert-dialog";
 import { BackupList } from "@/components/settings/BackupList";
 import { BackupDeleteModal } from "@/components/settings/BackupDeleteModal";
+import { useBackups } from "@/hooks/useBackups";
+import { clearAllData } from "@/lib/db";
 
 export default function Settings() {
   const [isClearing, setIsClearing] = useState(false);
-  const [appVersion, setAppVersion] = useState<string>("...");
-  const [tauriVersion, setTauriVersion] = useState<string>("...");
-  const [backups, setBackups] = useState<string[]>([]);
+  const [appVersion, setAppVersion] = useState("...");
+  const [tauriVersion, setTauriVersion] = useState("...");
   const [backupToDelete, setBackupToDelete] = useState<string | null>(null);
-  const [loadingBackups, setLoadingBackups] = useState(false);
 
-  const refreshBackups = async () => {
-    setLoadingBackups(true);
-    try {
-      const list = await listBackups();
-      setBackups(list);
-    } catch (err) {
-      toast.error("Errore nel caricamento dei backup" + err);
-    }
-    setLoadingBackups(false);
-  };
+  const { backups, loading, refresh, create, restore, deleteBackup } =
+    useBackups();
 
   const checkForUpdate = async () => {
     try {
@@ -82,34 +66,11 @@ export default function Settings() {
     setIsClearing(false);
   };
 
-  const handleRestore = async (fileName: string) => {
-    try {
-      await restoreBackup(fileName);
-      toast.success(`Backup ripristinato: ${fileName}`);
-    } catch (err) {
-      toast.error("Errore durante il ripristino");
-      console.error(err);
-    }
-  };
-
-  async function handleDelete(filename: string) {
-    try {
-      await remove(`backups/${filename}`, {
-        baseDir: BaseDirectory.AppLocalData,
-      });
-      toast.success("Backup eliminato");
-      await refreshBackups();
-    } catch (err) {
-      toast.error("Errore durante l'eliminazione");
-      console.error(err);
-    }
-  }
-
   useEffect(() => {
     getVersion().then(setAppVersion);
     getTauriVersion().then(setTauriVersion);
-    refreshBackups();
-  }, []);
+    refresh();
+  }, [refresh]);
 
   return (
     <div className="bg-gray-50 min-h-screen space-y-8">
@@ -131,31 +92,15 @@ export default function Settings() {
         <TabsContent value="data" className="space-y-6">
           <BackupList
             backups={backups}
-            loading={loadingBackups}
-            onCreate={async () => {
-              if (backups.length >= 5) {
-                toast.error(
-                  "Hai raggiunto il limite massimo di 5 backup. Elimina un backup prima di crearne uno nuovo."
-                );
-                return;
-              }
-
-              try {
-                const file = await createVersionedBackup();
-                toast.success(`Backup creato: ${file}`);
-                await refreshBackups();
-              } catch (err) {
-                toast.error("Errore durante il backup");
-                console.error(err);
-              }
-            }}
-            onRestore={handleRestore}
-            onDelete={(filename: string) => setBackupToDelete(filename)}
+            loading={loading}
+            onCreate={create}
+            onRestore={restore}
+            onDelete={(filename) => setBackupToDelete(filename)}
             onExport={async () => {
               try {
                 const file = await exportFullData();
                 toast.success(`Esportazione completata: ${file}`);
-                await refreshBackups(); // ✅ aggiorna subito la lista
+                await refresh();
               } catch (err) {
                 toast.error("Errore durante l'esportazione.");
                 console.error(err);
@@ -165,16 +110,15 @@ export default function Settings() {
           />
 
           <BackupDeleteModal
-            open={!!backupToDelete} // true se esiste un backup selezionato
+            open={!!backupToDelete}
             filename={backupToDelete || ""}
             onCancel={() => setBackupToDelete(null)}
             onConfirm={async () => {
-              if (backupToDelete) await handleDelete(backupToDelete);
+              if (backupToDelete) await deleteBackup(backupToDelete);
               setBackupToDelete(null);
             }}
           />
 
-          {/* Zona Pericolosa */}
           <div className="p-4 border border-red-200 bg-red-50 rounded-lg">
             <h4 className="font-medium text-red-900 mb-2">Zona Pericolosa</h4>
             <p className="text-sm text-red-700 mb-4">
@@ -213,7 +157,6 @@ export default function Settings() {
             </AlertDialog>
           </div>
 
-          {/* Info Versione */}
           <div className="p-4 border rounded-lg bg-gray-50 space-y-3">
             <h4 className="font-medium">Versione Attuale</h4>
             <p className="text-sm text-gray-700">

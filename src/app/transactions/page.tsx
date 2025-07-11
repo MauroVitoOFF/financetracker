@@ -92,8 +92,8 @@ export default function Transactions() {
     .reduce((s, t) => s + t.amount, 0);
   const netBalance = totalIncome - totalExpense;
 
-  const handleUpdate = async (txn: Transaction) => {
-    await updateTransaction(txn);
+  const handleUpdate = async (txn: Transaction, updateAll: boolean = false) => {
+    await updateTransaction(txn, updateAll);
     await refresh();
   };
 

@@ -7,15 +7,7 @@ import {
   mkdir,
 } from "@tauri-apps/plugin-fs";
 import { appLocalDataDir, BaseDirectory } from "@tauri-apps/api/path";
-import {
-  getTransactions,
-  getCategories,
-  getSubscriptions,
-  clearAllData,
-  addCategory,
-  bulkInsertTransactions,
-  addSubscription,
-} from "@/lib/db";
+
 import { BackupDataSchema } from "./validation";
 import {
   BackupData,
@@ -23,6 +15,15 @@ import {
   SubscriptionBackup,
   TransactionBackup,
 } from "./types";
+import {
+  addCategory,
+  addSubscription,
+  bulkInsertTransactions,
+  clearAllData,
+  getCategories,
+  getSubscriptions,
+  getTransactions,
+} from "./db";
 
 const BACKUP_FOLDER_NAME = "backups";
 
@@ -62,10 +63,26 @@ export function parseBackupDate(filename: string): Date | null {
   return null;
 }
 
+function stableStringify(value: unknown): string {
+  if (Array.isArray(value)) {
+    return `[${value.map(stableStringify).join(",")}]`;
+  }
+
+  if (value !== null && typeof value === "object") {
+    const entries = Object.entries(value as Record<string, unknown>).sort(
+      ([a], [b]) => a.localeCompare(b)
+    );
+    return `{${entries
+      .map(([key, val]) => `"${key}":${stableStringify(val)}`)
+      .join(",")}}`;
+  }
+
+  return JSON.stringify(value);
+}
+
 export function generateSignature(data: object): string {
-  const clean = JSON.parse(JSON.stringify(data));
-  const encoded = new TextEncoder().encode(JSON.stringify(clean));
-  const hash = sha256(encoded); // returns Uint8Array
+  const encoded = new TextEncoder().encode(stableStringify(data));
+  const hash = sha256(encoded);
   return Array.from(hash)
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
